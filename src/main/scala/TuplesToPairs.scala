@@ -1,15 +1,30 @@
-import shapeless.syntax.std.tuple._
-
-import scalaz._, std.option._, std.tuple._, syntax.bitraverse._
 import scalaz._
-import std.option._
-import std.tuple._
-import syntax.bitraverse._
+import scalaz.std.option._
+import scalaz.std.tuple._
+import scalaz.syntax.bitraverse._
 
-
+// see 2015.08.20 notes
 object TuplesToPairs {
 
+  import shapeless._
+  import ops.hlist._
+  
+
+  def getAtIndex[T, L <: HList, N <: Nat](tpl: T, index: N)(implicit
+                                                     gen: Generic.Aux[T, L],
+                                                     at: At[L, N])
+  : at.Out =
+    at(gen.to(tpl))
+
+  def getFirstStringOption[T, L <: HList](tpl: T)(implicit
+                                    gen: Generic.Aux[T, L],
+                                    at: Selector[L, Option[String]])
+  : at.Out =
+    at(gen.to(tpl))
+
 //  def toKeys(entities: List[Product], keyIndex: Int): List[String] = {
+//  import shapeless._
+//  import syntax.std.tuple._
 //    val keys: List[Option[String]] = entities.map { prod => prod(keyIndex) }
 //    keys.flatten
 //  }
