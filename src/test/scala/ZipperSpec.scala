@@ -1,4 +1,3 @@
-import org.scalactic.TripleEquals._
 import org.scalatest._
 
 
@@ -99,7 +98,7 @@ class ZipperSpec extends FlatSpec with Matchers {
     // http://etorreborre.blogspot.de/2013/06/a-zipper-and-comonad-example.html
 
     // we are trying to specify the following method
-    // def partition[A](seq: Seq[A])(relation: (A, A) => Boolean): Seq[NonEmptyList[A]]
+//     def partition[A](seq: Seq[A])(relation: (A, A) => Boolean): Seq[NonEmptyList[A]]
 
     // for each element in a group, there exists at least another related element in the group
     // for each element in a group, there doesn't exist a related element in any other group
@@ -107,9 +106,7 @@ class ZipperSpec extends FlatSpec with Matchers {
 
 
     val near = (n1: Int, n2: Int) => math.abs(n1 - n2) <= 1
-    partition(Seq(1, 2, 3, 7, 8, 9))(near)
-
-
+//    partition(Seq(1, 2, 3, 7, 8, 9))(near)
   }
 
 
