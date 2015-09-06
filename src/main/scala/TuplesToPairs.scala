@@ -1,4 +1,3 @@
-import scalaz._
 import scalaz.std.option._
 import scalaz.std.tuple._
 import scalaz.syntax.bitraverse._
