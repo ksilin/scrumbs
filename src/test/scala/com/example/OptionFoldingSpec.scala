@@ -1,7 +1,8 @@
+package com.example
+
 import org.scalatest._
 
 class OptionFoldingSpec extends FlatSpec with Matchers {
-
 
   "Option" should "be foldable" in {
 
@@ -16,7 +17,7 @@ class OptionFoldingSpec extends FlatSpec with Matchers {
     val check1: String = noString.fold("is empty")(s => s"has a value: $s")
     val check2: String = someString.fold("is empty")(s => s"has a value: $s")
 
-    check1 should be === "is empty"
+    check1 should be("is empty")
     check2 should startWith("has a value")
 
     /*
@@ -29,9 +30,7 @@ class OptionFoldingSpec extends FlatSpec with Matchers {
   but is also OK with
 
   opt map { x => x + 1 } getOrElse 0
-
      */
 
   }
-
 }

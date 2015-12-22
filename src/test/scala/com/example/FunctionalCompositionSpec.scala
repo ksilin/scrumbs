@@ -1,4 +1,6 @@
-import org.scalatest.{Matchers, FunSpec}
+package com.example
+
+import org.scalatest.{FunSpec, Matchers}
 
 class FunctionalCompositionSpec extends FunSpec with Matchers {
 

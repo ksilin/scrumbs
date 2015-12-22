@@ -1,3 +1,5 @@
+package com.example.helpers
+
 
 // the left list is required to be the 'reverse' of the left part of the original list
 class Zipper[T](focus: T, left: List[T], right: List[T]) {

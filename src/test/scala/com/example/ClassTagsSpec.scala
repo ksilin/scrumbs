@@ -1,3 +1,5 @@
+package com.example
+
 import org.scalatest.{FunSpec, Matchers}
 
 import scala.reflect.runtime.universe._
@@ -172,7 +174,7 @@ class ClassTagsSpec extends FunSpec with Matchers {
     it("second match") {
       val intList = List(1, 2)
       val mat: String = cascadedAnyMatching(intList)
-      mat should be("String") // erasure still - first List matches
+      mat should be("Int") // erasure still - first List matches
     }
   }
 

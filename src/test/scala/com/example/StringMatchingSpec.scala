@@ -1,3 +1,5 @@
+package com.example
+
 import org.scalatest.{FunSpec, Matchers}
 
 class StringMatchingSpec extends FunSpec with Matchers {

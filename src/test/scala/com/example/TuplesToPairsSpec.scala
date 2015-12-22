@@ -1,3 +1,6 @@
+package com.example
+
+import com.example.helpers.TuplesToPairs
 import org.scalatest._
 import shapeless.Nat
 
