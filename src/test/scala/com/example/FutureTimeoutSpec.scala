@@ -81,14 +81,12 @@ class FutureTimeoutSpec extends AsyncFunSpec with Matchers with BeforeAndAfterEa
         }
       }
 
+      // Try is basically an error-specific Either
       describe("Try") {
-
         it("common timeout fail") {
-          // Try is basically an error-specific Either
           val res: Try[(String, String)] = Try {
             Await.result(resFuture, 1 seconds)
           }
-
           res should be('failure) // isFailure
           res shouldBe a[Failure[(String, String)]]
           // yeah, we should actually be matching
@@ -97,14 +95,10 @@ class FutureTimeoutSpec extends AsyncFunSpec with Matchers with BeforeAndAfterEa
         }
 
         it("common timeout success") {
-
           val res: Try[(String, String)] = Try {
             Await.result(resFuture, 10 seconds)
           }
-          res shouldNot be('failure) // isFailure
           res shouldBe a[Success[(String, String)]]
-          // if the timeout of Await is shorter than the timeout of the failed Future, all futures fail
-
           res should be(Success("hi", expectedTimeoutMsg))
         }
       }
@@ -115,6 +109,5 @@ class FutureTimeoutSpec extends AsyncFunSpec with Matchers with BeforeAndAfterEa
       // TODO - try scalaz Task: http://timperrett.com/2014/07/20/scalaz-task-the-missing-documentation/
 
       // TODO - combining Future & Either from cats: http://eed3si9n.com/herding-cats/stacking-future-and-either.html
-
   }
 }
