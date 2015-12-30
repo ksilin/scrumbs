@@ -44,11 +44,8 @@ class FutureCombinationSpec extends AsyncFunSpec with Matchers with BeforeAndAft
         f <- throwing.recoverWith { case e => Future(s"failed with: $e") }
       } yield (s, f)
 
-//      resFuture map (_ should be(("hi", "failed with: java.lang.Exception: boom!")))
       resFuture map (_ should be(("hi", "failed with: java.lang.Exception: boom!")))
     }
-
-    // TODO - lift to Try: http://stackoverflow.com/questions/29344430/scala-waiting-for-sequence-of-futures
 
     it("should fallback") {
       val resFuture: Future[(String, String)] = for {

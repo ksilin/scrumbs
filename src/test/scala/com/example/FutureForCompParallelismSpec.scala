@@ -30,9 +30,7 @@ class FutureForCompParallelismSpec extends FunSpec with Matchers {
 
       val elapsed = System.currentTimeMillis - start
       println(s"elapsed in for comp: $elapsed")
-//      elapsed should be >(200)
-//      elapsed shouldBe >(200)
-      (elapsed > 500) shouldBe true
+      elapsed should be > 500L
     }
 
     // 503
@@ -51,7 +49,7 @@ class FutureForCompParallelismSpec extends FunSpec with Matchers {
 
       val elapsed = System.currentTimeMillis - start
       println(s"elapsed in for comp: $elapsed")
-      (elapsed > 500) shouldBe true
+      elapsed should be > 500L
     }
 
     // 103
@@ -75,7 +73,7 @@ class FutureForCompParallelismSpec extends FunSpec with Matchers {
 
       val elapsed = System.currentTimeMillis - start
       println(s"elapsed pre for comp: $elapsed")
-      (elapsed > 500) shouldBe false
+      elapsed should be < 500L
     }
 
     // 102
@@ -93,7 +91,7 @@ class FutureForCompParallelismSpec extends FunSpec with Matchers {
 
       val elapsed = System.currentTimeMillis - start
       println(s"elapsed list: $elapsed")
-      (elapsed > 500) shouldBe false
+      elapsed should be < 500L
     }
 
   // 101
@@ -112,7 +110,7 @@ class FutureForCompParallelismSpec extends FunSpec with Matchers {
 
       val elapsed = System.currentTimeMillis - start
       println(s"elapsed list: $elapsed")
-      (elapsed > 500) shouldBe false
+      elapsed should be < 500L
     }
   }
 }
