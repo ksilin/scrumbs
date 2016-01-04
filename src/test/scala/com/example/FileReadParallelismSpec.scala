@@ -1,7 +1,7 @@
 package com.example
 
 import java.io.{File => JFile}
-import java.nio.file.Files
+import java.nio.file.{Path, Files}
 import java.util.stream.Stream
 
 import better.files._
@@ -22,10 +22,11 @@ class FileReadParallelismSpec extends FunSpec with Matchers {
   val r = new Random(31)
   val chunkSize: Int = 100
 
-  // TODO - can I open the same file multiple times for separate streams?
+  // TODO - open same file multiple times for separate streams
 
   def createFakeFile(lines: Int = 1000): File = {
-    val file = File.newTemporaryFile("parallelreads")
+    val file = Files.createTempFile("parallelreads", "")
+    file.toJava.deleteOnExit()
     (1 to lines) foreach { i =>
       file << s"$i * ${r.nextString(10)}"
     }
@@ -41,14 +42,19 @@ class FileReadParallelismSpec extends FunSpec with Matchers {
 
   val f = createFakeFile()
 
+  val bigFile = createFakeFile(1000000)
+
   def fakeProcessor(s: String): String = {
     Thread.sleep(10)
     "booya"
   }
 
+  def fastProcessor(s: String): String = identity(s)
+
   describe("raw text file line by line") {
 
-    it("sequential") {  // 10150
+    it("sequential") {
+      // 10150
       timed("sequential") {
         val chunks: Iterator[String]#GroupedIterator[String] = Source.fromFile(f.toJava).getLines.grouped(chunkSize)
         chunks foreach {
@@ -57,7 +63,9 @@ class FileReadParallelismSpec extends FunSpec with Matchers {
       }
     }
 
-    it("par lines in chunks") {  // 1890
+    it("par lines in chunks") {
+      // 1890
+      System.in.read()
       timed("par lines in chunks") {
         val chunks: Iterator[String]#GroupedIterator[String] = Source.fromFile(f.toJava).getLines.grouped(chunkSize)
         chunks.foreach {
@@ -66,7 +74,8 @@ class FileReadParallelismSpec extends FunSpec with Matchers {
       }
     }
 
-    it("par lines in par chunks") { // 2030
+    it("par lines in par chunks") {
+      // 2030
       timed("par lines in par chunks") {
         val chunks: Iterator[String]#GroupedIterator[String] = Source.fromFile(f.toJava).getLines.grouped(chunkSize)
         chunks.toIndexedSeq.par.foreach {
@@ -75,14 +84,16 @@ class FileReadParallelismSpec extends FunSpec with Matchers {
       }
     }
 
-    it("par lines") {  // 1900
+    it("par lines") {
+      // 1900
       timed("par lines") {
         val lines: IndexedSeq[String] = Source.fromFile(f.toJava).getLines.toIndexedSeq
         lines.par foreach fakeProcessor
       }
     }
 
-    it("line futures") {  //1280
+    it("line futures") {
+      //1290
       import scala.concurrent.ExecutionContext.Implicits.global
       timed("line futures") {
         val lines: scala.Iterator[String] = Source.fromFile(f.toJava).getLines
@@ -93,9 +104,21 @@ class FileReadParallelismSpec extends FunSpec with Matchers {
         Await.result(Future.sequence(eventualStrings), 20 seconds)
       }
     }
+    it("line futures with traverse") {
+      //1290
+      import scala.concurrent.ExecutionContext.Implicits.global
+      timed("more line futures") {
+        val lines: scala.Iterator[String] = Source.fromFile(f.toJava).getLines
+        val eventualStrings: Future[scala.Iterator[String]] = Future.traverse(lines)(l => Future {
+          fakeProcessor(l)
+        })
+        Await.result(eventualStrings, 20 seconds)
+      }
+    }
 
     it("preloaded into memory") {
-      timed("preloaded into memory") { // 2000
+      timed("preloaded into memory") {
+        // 2000
         val lines: mutable.Buffer[String] = f.lines.asInstanceOf[mutable.Buffer[String]]
         val chunks: Iterator[mutable.Buffer[String]] = lines.grouped(chunkSize)
 
@@ -106,7 +129,8 @@ class FileReadParallelismSpec extends FunSpec with Matchers {
     }
 
     it("sequential stream") {
-      timed("sequential stream") { // 10180
+      timed("sequential stream") {
+        // 10180
         val streams: ManagedResource[Stream[String]] = Files.lines(f.path).autoClosed
 
         streams foreach { stream: Stream[String] =>
@@ -119,7 +143,8 @@ class FileReadParallelismSpec extends FunSpec with Matchers {
     }
 
     it("parallel stream") {
-      timed("parallel stream") { // 1780
+      timed("parallel stream") {
+        // 1780
         val streams: ManagedResource[Stream[String]] = Files.lines(f.path).autoClosed
 
         streams foreach { stream: Stream[String] =>
@@ -133,9 +158,106 @@ class FileReadParallelismSpec extends FunSpec with Matchers {
   }
 
   // memory info
-  //  val mb = 1024*1024
-  //  val runtime = Runtime.getRuntime
-  //  log.info("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / mb)
+  val mb = 1024 * 1024
+  val runtime = Runtime.getRuntime
+
+
+  describe("clumsy memory profiling") {
+    pending
+
+    it("sequential") {
+      // 10150
+      val chunks: Iterator[String]#GroupedIterator[String] = Source.fromFile(f.toJava).getLines.grouped(chunkSize)
+      chunks foreach {
+        _ foreach { l =>
+          log.info("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / mb)
+          fakeProcessor(l)
+        }
+      }
+    }
+
+    it("par lines in chunks") {
+      // 1890
+      val chunks: Iterator[String]#GroupedIterator[String] = Source.fromFile(bigFile.toJava).getLines.grouped(chunkSize)
+      chunks.foreach {
+        _.par foreach { l =>
+          log.info("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / mb)
+          fastProcessor(l)
+        }
+      }
+    }
+
+    it("par lines in par chunks") {
+      // 2030
+      pending
+      val chunks: Iterator[String]#GroupedIterator[String] = Source.fromFile(f.toJava).getLines.grouped(chunkSize)
+      chunks.toIndexedSeq.par.foreach {
+        _.par foreach fakeProcessor
+      }
+    }
+
+    it("par lines") {
+      // 1900
+      pending
+      val lines: IndexedSeq[String] = Source.fromFile(f.toJava).getLines.toIndexedSeq
+      lines.par foreach fakeProcessor
+    }
+
+    it("line futures") {
+      //1280
+      pending
+      import scala.concurrent.ExecutionContext.Implicits.global
+      val lines: scala.Iterator[String] = Source.fromFile(f.toJava).getLines
+      val eventualStrings: scala.Iterator[Future[String]] = lines map { line => Future {
+        fakeProcessor(line)
+      }
+      }
+      Await.result(Future.sequence(eventualStrings), 20 seconds)
+    }
+
+    it("preloaded into memory") {
+      pending
+      val lines: mutable.Buffer[String] = f.lines.asInstanceOf[mutable.Buffer[String]]
+      val chunks: Iterator[mutable.Buffer[String]] = lines.grouped(chunkSize)
+
+      chunks.foreach {
+        _.par.foreach { line => fakeProcessor(line) }
+      }
+    }
+
+    it("sequential stream") {
+      pending
+      val streams: ManagedResource[Stream[String]] = Files.lines(bigFile.path).autoClosed
+
+      streams foreach { stream: Stream[String] =>
+        val chunks: Iterator[String]#GroupedIterator[String] = stream.iterator.asScala.grouped(chunkSize)
+        var count = 0
+        chunks foreach {
+          _ foreach { l =>
+            count += 1
+            if (count % 100 == 0) log.info("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / mb)
+            fastProcessor(l)
+          }
+        }
+      }
+    }
+
+    it("parallel stream") {
+      val streams: ManagedResource[Stream[String]] = Files.lines(bigFile.path).autoClosed
+
+      streams foreach { stream: Stream[String] =>
+        val chunks: Iterator[String]#GroupedIterator[String] = stream.iterator.asScala.grouped(chunkSize)
+        var count = 0
+        chunks foreach {
+          _.par foreach { l =>
+            count += 1
+            if (count % 100 == 0) log.info("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / mb)
+            fastProcessor(l)
+          }
+        }
+      }
+    }
+  }
 
   describe("raw xml file") {
 
