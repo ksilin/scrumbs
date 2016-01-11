@@ -28,10 +28,11 @@ class FutureCombinationSpec extends AsyncFunSpec with Matchers with BeforeAndAft
         f <- throwing
       } yield (s, f)
 
-//      resFuture map { r => assertThrows[Exception]{r.toString }} - does not work, have asked at Artima blog
+//      recoverToSucceededIf[Exception] {resFuture}
+      val ex = recoverToExceptionIf[Exception] {resFuture}
 
-      val ex: Exception = intercept[Exception] {Await.result(resFuture, 1 second)}
-      ex should have message(errorMsg)
+//      val ex: Exception = intercept[Exception] {Await.result(resFuture, 1 second)}
+      ex map {e => e should have message(errorMsg)}
     }
     // an [Exception] should be thrownBy {Await.result(resFuture, 1 second)} works as well, bit returns an Assertion
     // or, simpler: assertThrows[Exception], also returns an Assertion

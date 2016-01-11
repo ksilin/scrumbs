@@ -78,8 +78,12 @@ class CatsValidationSpec extends FunSpec with Matchers {
 
       val v1: Validated[List[String], Int] = Valid(1)
       val v2: Validated[List[String], Int] = Invalid(List("Accumulates this"))
-      val v3: Validated[List[String], Int] = Invalid(List("And this"))
 
+      val v3: ValidatedNel[List[String], Int] = Invalid(List("And this")).toValidatedNel
+      val v4: ValidatedNel[List[String], Int] = Invalid(List("boom")).toValidatedNel
+
+// TODO - why it no worky?
+//      v3 |@| v4
 
       // value flatMap is not a member of cats.data.Validated...
 //      val res = for {
@@ -88,6 +92,9 @@ class CatsValidationSpec extends FunSpec with Matchers {
 //      z <- v3
 //      } yield (x, y, z)
 //      println(res)
+
+      // it no worky either
+//      val xors = (v1.toXor |@| v2.toXor)
 
       import cats.syntax.apply._
 
