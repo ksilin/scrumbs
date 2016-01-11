@@ -45,8 +45,6 @@ class ScalazValidationSpec extends FunSpec with Matchers {
 
     it("SO") {
       // http://stackoverflow.com/questions/32358719/validation-usage-with-in-scalaz
-      import scalaz._, Scalaz._
-
       case class HttpConnectionParams(url: String, user: String, password: String)
 
       val a = Map("url" -> "http://example.com", "user" -> "bob", "pass" -> "12345")
@@ -67,8 +65,6 @@ class ScalazValidationSpec extends FunSpec with Matchers {
 
     it("disjunction") {
       // https://speakerdeck.com/bwmcadams/scaladays-sf-2015-a-skeptics-guide-to-scalaz-gateway-drugs
-      import scalaz._, Scalaz._
-
       // \/ is right-biased (success)
       // can be used on for-comp/map/flatMap -\/ abort, \/- continue
 
@@ -89,8 +85,6 @@ class ScalazValidationSpec extends FunSpec with Matchers {
 
     it("more validation") {
       // https://speakerdeck.com/bwmcadams/scaladays-sf-2015-a-skeptics-guide-to-scalaz-gateway-drugs
-      import scalaz._, Scalaz._
-
       // Validation is not a monad
       // Validation is an applicative functor
 
@@ -129,10 +123,17 @@ class ScalazValidationSpec extends FunSpec with Matchers {
       println(succ)
       println(succ.c)
 //      succ.b should be(Failure(NonEmptyList("no user","user has no address")))
-
-
-
       }
-    }
 
+      it("fromTryCatchThrowable"){
+        val res: Disjunction[Throwable, Int] = \/.fromTryCatchNonFatal{ "abc".toInt}
+        println(res) // -\/(java.lang.NumberFormatException For input string: "abc")
+
+        // can be NumberFormatException for precise matching instead of Exception
+        val res2 = \/.fromTryCatchThrowable[Int, Exception]{ "abc".toInt}
+        println(res) // -\/(java.lang.NumberFormatException For input string: "abc")
+      }
+
+    // |@| - oink, cinnabun, tie fighter, princess leia, scream
+    }
 }
