@@ -11,8 +11,8 @@ class OptionFoldingSpec extends FlatSpec with Matchers {
 
 
     // map getOrElse is functionally identical to fold
-    val b = noString map (s => s"has a value $s") getOrElse "is empty"
-    val b2 = noString.map(s => s"has a value $s").getOrElse("is empty")
+//    val b = noString map (s => s"has a value $s") getOrElse "is empty"
+//    val b2 = noString.map(s => s"has a value $s").getOrElse("is empty")
 
     val check1: String = noString.fold("is empty")(s => s"has a value: $s")
     val check2: String = someString.fold("is empty")(s => s"has a value: $s")
