@@ -13,11 +13,11 @@ libraryDependencies ++=
     "org.scalatest" %% "scalatest" % "3.0.0-M15" % "test",
     "com.jsuereth" %% "scala-arm" % "1.4",
 
-      "com.chuusai" %% "shapeless" % "2.2.5",
+    "com.chuusai" %% "shapeless" % "2.2.5",
 
-      "org.scalaz" %% "scalaz-core" % scalazVersion,
-      "org.scalaz" %% "scalaz-concurrent" % scalazVersion,
-    "org.spire-math" %% "cats" % "0.3.0",
+    "org.scalaz" %% "scalaz-core" % scalazVersion,
+    "org.scalaz" %% "scalaz-concurrent" % scalazVersion,
+    "org.typelevel" %% "cats" % "0.5.0",
     "com.typesafe.akka" %% "akka-actor" % "2.4.1",
 
     "org.apache.commons" % "commons-compress" % "1.10",
