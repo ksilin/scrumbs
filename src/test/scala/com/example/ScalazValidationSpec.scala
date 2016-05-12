@@ -131,7 +131,7 @@ class ScalazValidationSpec extends FunSpec with Matchers {
 
         // can be NumberFormatException for precise matching instead of Exception
         val res2 = \/.fromTryCatchThrowable[Int, Exception]{ "abc".toInt}
-        println(res) // -\/(java.lang.NumberFormatException For input string: "abc")
+        println(res2) // -\/(java.lang.NumberFormatException For input string: "abc")
       }
 
     // |@| - oink, cinnabun, tie fighter, princess leia, scream
