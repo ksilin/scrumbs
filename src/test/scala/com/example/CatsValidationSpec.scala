@@ -105,7 +105,8 @@ class CatsValidationSpec extends FunSpec with Matchers {
       val eithers = (v1.toEither |@| v2.toEither)
 //      println(eithers) // cats.syntax.CartesianBuilder$
 
-      val lists  = (v1.toList |@| v2.toList) // cats.syntax.CartesianBuilder
+      // Error:(108, 31) value |@| is not a member of List[Int]
+//      val lists  = (v1.toList |@| v2.toList) // cats.syntax.CartesianBuilder
 //      println(lists)
     }
   }
