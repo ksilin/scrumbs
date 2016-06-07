@@ -1,6 +1,7 @@
 package com.example
 
 import cats.data.ValidatedNel
+import cats.syntax.CartesianBuilder
 import org.scalatest.{FunSpec, Matchers}
 
 class CatsValidationSpec extends FunSpec with Matchers {
@@ -83,7 +84,6 @@ class CatsValidationSpec extends FunSpec with Matchers {
       val v4: ValidatedNel[List[String], Int] = Invalid(List("boom")).toValidatedNel
 
 // TODO - why it no worky?
-//      v3 |@| v4
 
       // value flatMap is not a member of cats.data.Validated...
 //      val res = for {
@@ -93,22 +93,20 @@ class CatsValidationSpec extends FunSpec with Matchers {
 //      } yield (x, y, z)
 //      println(res)
 
+      import cats.std.all._
+      import cats.syntax.cartesian._
+
       // it no worky either
-//      val xors = (v1.toXor |@| v2.toXor)
-
-      import cats.syntax.apply._
-
       // no |@| syntax for Validated or Xor
 //      (v1 |@| v2)
-//      (v1.toXor |@| v2.toXor)
+      //      val xors = (v1.toXor |@| v2.toXor)
+      //      val nels = v3 |@| v4
 
-      import cats.std.either._
       val eithers = (v1.toEither |@| v2.toEither)
-      println(eithers) // cats.syntax.ApplyBuilder$
+//      println(eithers) // cats.syntax.CartesianBuilder$
 
-      import cats.std.list._
-      val lists = (v1.toList |@| v2.toList) // cats.syntax.ApplyBuilder$
-      println(lists)
+      val lists  = (v1.toList |@| v2.toList) // cats.syntax.CartesianBuilder
+//      println(lists)
     }
   }
 
