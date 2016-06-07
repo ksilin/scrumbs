@@ -7,6 +7,7 @@ scalaVersion := "2.11.8"
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
 val scalazVersion = "7.2.0"
+val catsVersion = "0.6.0"
 
 libraryDependencies ++=
   Seq(
@@ -17,7 +18,8 @@ libraryDependencies ++=
 
     "org.scalaz" %% "scalaz-core" % scalazVersion,
     "org.scalaz" %% "scalaz-concurrent" % scalazVersion,
-    "org.typelevel" %% "cats" % "0.5.0",
+    "org.typelevel" %% "cats" % catsVersion,
+    "org.typelevel" %% "cats-free" % catsVersion,
     "com.typesafe.akka" %% "akka-actor" % "2.4.1",
 
     "org.apache.commons" % "commons-compress" % "1.10",
