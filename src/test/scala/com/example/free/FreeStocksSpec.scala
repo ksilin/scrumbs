@@ -15,6 +15,10 @@ import scala.concurrent.Future
 
 class FreeStocksSpec extends FunSpec with Matchers {
 
+  // TODO the code below can be simplified by using FreeK
+  // http://perevillega.com/freek-and-free-monads
+  // https://github.com/ProjectSeptemberInc/freek
+
   describe("free monads in a stock application") {
 
     // could be our standard approach
@@ -22,7 +26,6 @@ class FreeStocksSpec extends FunSpec with Matchers {
     type Symbol = String
     type Response = String
 
-    // looks like a command pattern at first
     sealed trait Orders[A]
     case class Buy(stock: Symbol, amount: Int) extends Orders[Response]
     case class Sell(stock: Symbol, amount: Int) extends Orders[Response]
@@ -263,7 +266,7 @@ class FreeStocksSpec extends FunSpec with Matchers {
           _ <- buyI("MSFT", 100)
           _ <- userActionAuditI("id1", "sell", List("GOOG", "100"))
           rsp <- sellI("GOOG", 100)
-          _ <- errorI("we should not be here")
+          _ <- infoI("trade done")
         } yield rsp
       }
 
@@ -291,7 +294,7 @@ class FreeStocksSpec extends FunSpec with Matchers {
 
       def messagingPrinter: Messaging ~> Id =
         new (Messaging ~> Id) {
-          def apply[A](fa: A): Id = fa match {
+          def apply[A](fa: Messaging[A]): Id[A] = fa match {
             case Publish(channel, source, messageId, payload) =>
               println(s"publishing [$channel] from $source id $messageId payload $payload")
               "ok"
@@ -306,12 +309,12 @@ class FreeStocksSpec extends FunSpec with Matchers {
 
       def orderToMessageInterpreter: Orders ~> MessagingF =
         new (Orders ~> MessagingF) {
-          def apply[A](fa: Orders[A]): MessagingF[A] = {
+          def apply[A](fa: Orders[A]): MessagingF[A] = fa match {
             case ListStocks() =>
               for {
                 _ <- publish("001", "Orders", UUID.randomUUID().toString, "get stocks list")
                 payload <- subscribe("001", "*")
-              } yield payload
+              } yield List(payload)
             case Buy(stock, amount) => publish("001", "Orders", UUID.randomUUID().toString, s"buy $stock $amount")
             case Sell(stock, amount) => publish("001", "Orders", UUID.randomUUID().toString, "get stocks list")
           }
@@ -320,8 +323,35 @@ class FreeStocksSpec extends FunSpec with Matchers {
       // and how do we get from Orders to Id while using MessagingF?
       // we need an interpreter bridge
 
+      def messagingFreePrinter: MessagingF ~> Id =
+        new (MessagingF ~> Id) {
+          def apply[A](fa: MessagingF[A]): Id[A] = fa.foldMap(messagingPrinter)
+        }
+
+      def ordersToTerminalViaMessage : Orders ~> Id = orderToMessageInterpreter andThen messagingFreePrinter
+
+      // we can chain ~> via andThen
+      // but not here -> messagingPrinter expects Messaging, while orderToMEssageInterpreter emits MessagingF
+
+      println("--- orders to tertminal via msg")
+      val rr = trade2.foldMap(ordersToTerminalViaMessage)
+
+
+      def composedViaMessageInterpreter: TradeApp ~> Id = ordersToTerminalViaMessage or logPrinter
+      def auditableViaMessageInterpreter: AuditableTradeApp ~> Id = auditPrinter or composedViaMessageInterpreter
+
+
+      println(" --- trade with logs and msgs")
+      tradeWithLogs.foldMap(composedViaMessageInterpreter)
+      println(" --- trade with audits, logs and msgs")
+      tradeWithAuditsAndLogs.foldMap(auditableViaMessageInterpreter)
+
 
     }
+
+    // we have combined the mesaging language with the order laguage
+    // now we also want to use it with logging & audits
+    // for this, we need two new interpreters TradeApp ~> was not runnign through Messaging
 
   }
 
