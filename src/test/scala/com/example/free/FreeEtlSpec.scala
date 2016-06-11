@@ -20,6 +20,10 @@ class FreeEtlSpec extends FunSpec with Matchers {
     sealed trait Ops[A]
     type OpsF[A] = Free[Ops, A]
 
+    it("should work with both methods accepting lists and returning futures"){
+
+    }
+
     it("should work with both methods working with lists"){
 
       case class Fetch(offset: Int, amount: Int) extends Ops[List[Record]]
