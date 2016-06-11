@@ -8,6 +8,7 @@ resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repos
 
 val scalazVersion = "7.2.0"
 val catsVersion = "0.6.0"
+val monixVersion = "2.0-RC5"
 
 libraryDependencies ++=
   Seq(
@@ -20,6 +21,9 @@ libraryDependencies ++=
     "org.scalaz" %% "scalaz-concurrent" % scalazVersion,
     "org.typelevel" %% "cats" % catsVersion,
     "org.typelevel" %% "cats-free" % catsVersion,
+    "io.monix" %% "monix" % monixVersion,
+    "io.monix" %% "monix-cats" % monixVersion,
+
     "com.typesafe.akka" %% "akka-actor" % "2.4.1",
 
     "org.apache.commons" % "commons-compress" % "1.10",
