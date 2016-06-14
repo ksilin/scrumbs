@@ -21,7 +21,7 @@ import scala.util.{Success, Failure}
 // https://github.com/typelevel/cats/issues/32
 // https://github.com/typelevel/cats/issues/21
 
-class MonixPrimerSpec extends FunSpec with Matchers {
+class MonixTaskPrimerSpec extends FunSpec with Matchers {
 
   describe("dipping my toes into monix task") {
 
@@ -60,18 +60,33 @@ class MonixPrimerSpec extends FunSpec with Matchers {
       val once = Task.evalOnce{
         println(s"effect once + ${LocalDateTime.now}"); LocalDateTime.now
       }
-      val getResultOnce: CancelableFuture[LocalDateTime] = once.runAsync
+      once.runAsync
       once.runAsync // no effect
 
-      // equiv to a fn
-      Task.evalAlways{ println("effect fn"); "always"}
+      // equiv to a fn - will try to execute synchronously
+      val getResultAlways: Task[String] = Task.evalAlways{ println("effect fn"); "always"}
+      getResultAlways.runAsync
+      getResultAlways.runAsync
+
+      // turning into evalOnce
+      val memoized = getResultAlways.memoize
+      println("memoized: " + memoized)
+
 
       // task factory
-      Task.defer{ Task.now { println("effect fact")}}
+      val tf = Task.defer{ Task.now { println("effect fact")}}
+      val ra: CancelableFuture[Unit] = tf.runAsync
+      println(ra)
+      println(ra) // same
+      println(tf.runAsync) // new instance
 
       // guarantees async exec
       Task.fork(Task.evalAlways(println("effect fn")))
     }
+  }
+
+  describe("simple tl with tasks"){
+
   }
 
 }
