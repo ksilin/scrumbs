@@ -7,6 +7,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import cats.free.Free
 import cats.free.Free._
+import cats.{Id, ~>}
 import cats.std.list._
 import cats.syntax.traverse._
 
@@ -17,73 +18,55 @@ class FreeEtlSpec extends FunSpec with Matchers {
 
     type Response = String
     case class Record(id: String, payload: String)
-    sealed trait Ops[A]
-    type OpsF[A] = Free[Ops, A]
+    sealed trait EtlOp[A]
+    type OpsF[A] = Free[EtlOp, A]
 
     it("should work with both methods accepting lists and returning futures") {
 
-      case class Fetch(offset: Int, amount: Int) extends Ops[Future[List[Record]]]
-      case class Store(recs: List[Record]) extends Ops[Future[List[Response]]]
-      case class CalcBatches(offset: Int, amount: Int, batchSize: Int) extends Ops[List[Fetch]]
+      case class Fetch(offset: Int, amount: Int) extends EtlOp[Future[List[Record]]]
+      case class Store(recs: List[Record]) extends EtlOp[Future[List[Response]]]
+      case class CalcBatches(offset: Int, amount: Int, batchSize: Int) extends EtlOp[List[Fetch]]
 
-      def fetch(offset: Int, amount: Int): OpsF[Future[List[Record]]] = liftF[Ops, Future[List[Record]]](Fetch(offset, amount))
-      def store(recs: List[Record]): OpsF[Future[List[Response]]] = liftF[Ops, Future[List[Response]]](Store(recs))
-      def calcBatches(offset: Int, amount: Int, batchSize: Int): OpsF[List[Fetch]] = liftF[Ops, List[Fetch]](CalcBatches(offset, amount, batchSize))
+      def fetch(offset: Int, amount: Int): OpsF[Future[List[Record]]] = liftF[EtlOp, Future[List[Record]]](Fetch(offset, amount))
+      def store(recs: List[Record]): OpsF[Future[List[Response]]] = liftF[EtlOp, Future[List[Response]]](Store(recs))
+      def calcBatches(offset: Int, amount: Int, batchSize: Int): OpsF[List[Fetch]] = liftF[EtlOp, List[Fetch]](CalcBatches(offset, amount, batchSize))
 
+      // the language shoudl not be contrained by the impl - Futures or not shoudl be defined by the interpreter
+      // see next test and
+      // http://stackoverflow.com/questions/37783939/how-to-use-the-free-monad-with-futurem
 
 //      Error: type mismatch;
 //      found   : scala.concurrent.Future[OpsF[scala.concurrent.Future[List[Response]]]]
-//      (which expands to)  scala.concurrent.Future[cats.free.Free[Ops,scala.concurrent.Future[List[String]]]]
+//      (which expands to)  scala.concurrent.Future[cats.free.Free[EtlOp,scala.concurrent.Future[List[String]]]]
 //      required: OpsF[scala.concurrent.Future[List[Response]]]
-//      (which expands to)  cats.free.Free[Ops,scala.concurrent.Future[List[String]]]
+//      (which expands to)  cats.free.Free[EtlOp,scala.concurrent.Future[List[String]]]
 //      val getResponse: OpsF[Future[List[Response]]] = rf map { r: List[Record] =>
 //        ^
 
-//      def simpleEtl(offset: Int, amount: Int): Free[Ops, Future[List[Response]]] = fetch(offset, amount).flatMap { rf: Future[List[Record]] =>
+//      def simpleEtl(offset: Int, amount: Int): Free[EtlOp, Future[List[Response]]] = fetch(offset, amount).flatMap { rf: Future[List[Record]] =>
 //        val getResponse: OpsF[Future[List[Response]]] = rf map { r: List[Record] =>
 //          val resf: OpsF[Future[List[Response]]] = store(r)
 //          resf
 //        }
 //        getResponse
 //      }
-//
-//      val etl = for {
-//        b <- calcBatches(0, 1000, 10)
-//        rs <- b.traverseU(f => simpleEtl(f.offset, f.amount)) //f => fetch(f.offset, f.amount).flatMap(r => store(r)))
-//      } yield rs
-//      println(etl)
-//
-//      import cats.{Id, ~>}
-//
-//      def etlPrinter: Ops ~> Id =
-//        new (Ops ~> Id) {
-//          def apply[A](fa: Ops[A]): Id[A] = fa match {
-//            case Fetch(offset, amount) =>
-//              println(s"fetching $amount records with offset $offset")
-//              List(Record(offset.toString, "fake"))
-//            case Store(recs) =>
-//              println(s"storing $recs")
-//              List("ok")
-//            case CalcBatches(offset, amount, batchSize) =>
-//              println(s"calculating batches: $offset, $amount, $batchSize")
-//              List(Fetch(1, 50), Fetch(2, 60))
-//          }
-//        }
-//      // execute by invoking foldMap
-//      etl.foldMap(etlPrinter)
     }
 
     it("should work with both methods working with lists") {
 
-      case class Fetch(offset: Int, amount: Int) extends Ops[List[Record]]
-      case class Store(recs: List[Record]) extends Ops[List[Response]]
-      case class CalcBatches(offset: Int, amount: Int, batchSize: Int) extends Ops[List[Fetch]]
+      case class Fetch(offset: Int, amount: Int) extends EtlOp[List[Record]]
+      case class Store(recs: List[Record]) extends EtlOp[List[Response]]
+      case class CalcBatches(offset: Int, amount: Int, batchSize: Int) extends EtlOp[List[Fetch]]
 
-      def fetch(offset: Int, amount: Int): OpsF[List[Record]] = liftF[Ops, List[Record]](Fetch(offset, amount))
-      def store(recs: List[Record]): OpsF[List[Response]] = liftF[Ops, List[Response]](Store(recs))
-      def calcBatches(offset: Int, amount: Int, batchSize: Int): OpsF[List[Fetch]] = liftF[Ops, List[Fetch]](CalcBatches(offset, amount, batchSize))
+      def fetch(offset: Int, amount: Int): OpsF[List[Record]] = liftF[EtlOp, List[Record]](Fetch(offset, amount))
+      def store(recs: List[Record]): OpsF[List[Response]] = liftF[EtlOp, List[Response]](Store(recs))
+      def calcBatches(offset: Int, amount: Int, batchSize: Int): OpsF[List[Fetch]] = liftF[EtlOp, List[Fetch]](CalcBatches(offset, amount, batchSize))
 
-      def simpleEtl(offset: Int, amount: Int): Free[Ops, List[Response]] = fetch(offset, amount).flatMap(r => store(r))
+      def simpleEtl(offset: Int, amount: Int): Free[EtlOp, List[Response]] = fetch(offset, amount).flatMap(r => store(r))
+
+      import cats.{Id, ~>}
+      import cats.std.list._
+      import cats.syntax.traverse._
 
       val etl = for {
         b <- calcBatches(0, 1000, 10)
@@ -91,11 +74,9 @@ class FreeEtlSpec extends FunSpec with Matchers {
       } yield rs
       println(etl)
 
-      import cats.{Id, ~>}
-
-      def etlPrinter: Ops ~> Id =
-        new (Ops ~> Id) {
-          def apply[A](fa: Ops[A]): Id[A] = fa match {
+      def etlPrinter: EtlOp ~> Id =
+        new (EtlOp ~> Id) {
+          def apply[A](fa: EtlOp[A]): Id[A] = fa match {
             case Fetch(offset, amount) =>
               println(s"fetching $amount records with offset $offset")
               List(Record(offset.toString, "fake"))
@@ -111,16 +92,49 @@ class FreeEtlSpec extends FunSpec with Matchers {
       etl.foldMap(etlPrinter)
     }
 
+    it("should work with both methods working with lists and interpreter makes futures") {
+
+      case class Fetch(offset: Int, amount: Int) extends EtlOp[List[Record]]
+      case class Store(recs: List[Record]) extends EtlOp[List[Response]]
+      case class CalcBatches(offset: Int, amount: Int, batchSize: Int) extends EtlOp[List[Fetch]]
+
+      def fetch(offset: Int, amount: Int): OpsF[List[Record]] = liftF[EtlOp, List[Record]](Fetch(offset, amount))
+      def store(recs: List[Record]): OpsF[List[Response]] = liftF[EtlOp, List[Response]](Store(recs))
+
+      def simpleEtl(offset: Int, amount: Int): Free[EtlOp, List[Response]] = fetch(offset, amount).flatMap(r => store(r))
+
+      val interpretFuture: EtlOp ~> Future = new (EtlOp ~> Future) {
+        def apply[A](op: EtlOp[A]): Future[A] = op match {
+          case Store(records) =>
+            Future.successful(records.map(rec => s"Resp($rec)"))
+          // store in DB, send to webservice, ...
+          case Fetch(offset, amount) =>
+            Future.successful(List.fill(amount)(Record("id1", "fake payload")))
+          // get from DB, from webservice, ...
+        }
+      }
+      import cats.implicits._
+      val responses: Future[List[Response]] =
+        simpleEtl(1, 5).foldMap(interpretFuture)
+      responses.foreach(println)
+
+      val records: Future[List[Record]] =
+        fetch(2, 4).foldMap(interpretFuture)
+      records.foreach(println)
+
+      // and we can still have a non-future interpreter with the same language
+    }
+
     it("should work with Store accepting List and returning Future of List ") {
-      case class Fetch(offset: Int, amount: Int) extends Ops[List[Record]]
-      case class Store(recs: List[Record]) extends Ops[Future[List[Response]]]
-      case class CalcBatches(offset: Int, amount: Int, batchSize: Int) extends Ops[List[Fetch]]
+      case class Fetch(offset: Int, amount: Int) extends EtlOp[List[Record]]
+      case class Store(recs: List[Record]) extends EtlOp[Future[List[Response]]]
+      case class CalcBatches(offset: Int, amount: Int, batchSize: Int) extends EtlOp[List[Fetch]]
 
-      def fetch(offset: Int, amount: Int): OpsF[List[Record]] = liftF[Ops, List[Record]](Fetch(offset, amount))
-      def store(recs: List[Record]): OpsF[Future[List[Response]]] = liftF[Ops, Future[List[Response]]](Store(recs))
-      def calcBatches(offset: Int, amount: Int, batchSize: Int): OpsF[List[Fetch]] = liftF[Ops, List[Fetch]](CalcBatches(offset, amount, batchSize))
+      def fetch(offset: Int, amount: Int): OpsF[List[Record]] = liftF[EtlOp, List[Record]](Fetch(offset, amount))
+      def store(recs: List[Record]): OpsF[Future[List[Response]]] = liftF[EtlOp, Future[List[Response]]](Store(recs))
+      def calcBatches(offset: Int, amount: Int, batchSize: Int): OpsF[List[Fetch]] = liftF[EtlOp, List[Fetch]](CalcBatches(offset, amount, batchSize))
 
-      def simpleEtl(offset: Int, amount: Int): Free[Ops, Future[List[Response]]] = fetch(offset, amount).flatMap(r => store(r))
+      def simpleEtl(offset: Int, amount: Int): Free[EtlOp, Future[List[Response]]] = fetch(offset, amount).flatMap(r => store(r))
 
       val etl = for {
         b <- calcBatches(0, 1000, 10)
@@ -128,11 +142,9 @@ class FreeEtlSpec extends FunSpec with Matchers {
       } yield rs
       println(etl)
 
-      import cats.{Id, ~>}
-
-      def etlPrinter: Ops ~> Id =
-        new (Ops ~> Id) {
-          def apply[A](fa: Ops[A]): Id[A] = fa match {
+      def etlPrinter: EtlOp ~> Id =
+        new (EtlOp ~> Id) {
+          def apply[A](fa: EtlOp[A]): Id[A] = fa match {
             case Fetch(offset, amount) =>
               println(s"fetching $amount records with offset $offset")
               List(Record(offset.toString, "fake"))
@@ -150,28 +162,26 @@ class FreeEtlSpec extends FunSpec with Matchers {
 
     it("should work with Store accepting and returning Future of List") {
 
-      case class Fetch(offset: Int, amount: Int) extends Ops[Future[List[Record]]]
-      case class Store(recs: Future[List[Record]]) extends Ops[Future[List[Response]]]
-      case class CalcBatches(offset: Int, amount: Int, batchSize: Int) extends Ops[List[Fetch]]
+      case class Fetch(offset: Int, amount: Int) extends EtlOp[Future[List[Record]]]
+      case class Store(recs: Future[List[Record]]) extends EtlOp[Future[List[Response]]]
+      case class CalcBatches(offset: Int, amount: Int, batchSize: Int) extends EtlOp[List[Fetch]]
       // combining fetch & store
-      case class Batch(offset: Int, amount: Int) extends Ops[Future[List[Response]]]
+      case class Batch(offset: Int, amount: Int) extends EtlOp[Future[List[Response]]]
 
-      def fetch(offset: Int, amount: Int): OpsF[Future[List[Record]]] = liftF[Ops, Future[List[Record]]](Fetch(offset, amount))
-      def batch(offset: Int, amount: Int): OpsF[Future[List[Response]]] = liftF[Ops, Future[List[Response]]](Batch(offset, amount))
-      def store(recs: Future[List[Record]]): OpsF[Future[List[Response]]] = liftF[Ops, Future[List[Response]]](Store(recs))
-      def calcBatches(offset: Int, amount: Int, batchSize: Int): OpsF[List[Fetch]] = liftF[Ops, List[Fetch]](CalcBatches(offset, amount, batchSize))
+      def fetch(offset: Int, amount: Int): OpsF[Future[List[Record]]] = liftF[EtlOp, Future[List[Record]]](Fetch(offset, amount))
+      def batch(offset: Int, amount: Int): OpsF[Future[List[Response]]] = liftF[EtlOp, Future[List[Response]]](Batch(offset, amount))
+      def store(recs: Future[List[Record]]): OpsF[Future[List[Response]]] = liftF[EtlOp, Future[List[Response]]](Store(recs))
+      def calcBatches(offset: Int, amount: Int, batchSize: Int): OpsF[List[Fetch]] = liftF[EtlOp, List[Fetch]](CalcBatches(offset, amount, batchSize))
 
-      def simpleEtl(offset: Int, amount: Int): Free[Ops, Future[List[Response]]] =
+      def simpleEtl(offset: Int, amount: Int): Free[EtlOp, Future[List[Response]]] =
         for {
           fl <- fetch(offset, amount)
           rs <- store(fl)
         } yield rs
 
-      import cats.{Id, ~>}
-
-      def etlPrinter: Ops ~> Id =
-        new (Ops ~> Id) {
-          def apply[A](fa: Ops[A]): Id[A] = fa match {
+      def etlPrinter: EtlOp ~> Id =
+        new (EtlOp ~> Id) {
+          def apply[A](fa: EtlOp[A]): Id[A] = fa match {
             case Fetch(offset, amount) =>
               println(s"fetching $amount records with offset $offset")
               Future.successful(List(Record(offset.toString, "fake")))
@@ -198,7 +208,6 @@ class FreeEtlSpec extends FunSpec with Matchers {
 
       println("full etl")
       fullEtl(0, 100, 10).foldMap(etlPrinter)
-
 
       def batchEtl(offset: Int, amount: Int, batchSize: Int) = for {
         b <- calcBatches(offset, amount, batchSize)
