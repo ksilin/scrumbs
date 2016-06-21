@@ -12,11 +12,12 @@ addCompilerPlugin("com.milessabin" % "si2712fix-plugin" % "1.2.0" cross CrossVer
 
 val scalazVersion = "7.2.0"
 val catsVersion = "0.6.0"
-val monixVersion = "2.0-RC5"
+val monixVersion = "2.0-RC6"
 val akkaVersion = "2.4.6"
 
 libraryDependencies ++=
   Seq(
+    "org.scalatest" %% "scalatest" % "3.0.0-M15" % "test",
     "org.scalatest" %% "scalatest" % "3.0.0-M15" % "test",
     "com.jsuereth" %% "scala-arm" % "1.4",
 
