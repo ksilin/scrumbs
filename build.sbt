@@ -12,7 +12,7 @@ addCompilerPlugin("com.milessabin" % "si2712fix-plugin" % "1.2.0" cross CrossVer
 
 val scalazVersion = "7.2.0"
 val catsVersion = "0.6.0"
-val monixVersion = "2.0-RC6"
+val monixVersion = "2.0-RC7"
 val akkaVersion = "2.4.6"
 
 libraryDependencies ++=

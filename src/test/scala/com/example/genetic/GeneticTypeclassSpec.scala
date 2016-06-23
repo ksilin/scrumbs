@@ -8,7 +8,7 @@ import org.scalatest.{FreeSpec, Matchers, PropSpec}
 
 // a typeclass can be practivally viewed as a parametrized implicit param
 
-class GeneticTypclassSpec extends FreeSpec with PropSpec with Matchers with PropertyChecks {
+class GeneticTypeclassSpec extends FreeSpec with Matchers with PropertyChecks {
 
   // TODO - nice topic, nice talk, but no code available yetwill wait a bit for it
   // http://noelmarkham.github.io/genetics-scaladays/#/ ~ slide 30

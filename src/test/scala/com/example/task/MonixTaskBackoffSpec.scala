@@ -10,7 +10,6 @@ import scala.util.{Failure, Random, Success, Try}
 
 class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
 
-
   // TODO - allow more than 2 splits,
   // TODO - allow splits running sequentially
   // in order to reduce workload, need to pass the params of the original task as well

@@ -3,10 +3,11 @@ package com.example.task
 import java.io.Serializable
 
 import monix.execution.Scheduler.Implicits.global
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.{AsyncFreeSpec, Matchers}
 
+import scala.concurrent.TimeoutException
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.{Await, TimeoutException}
 import scala.util.Random
 
 // A Future type that is also Cancelable
@@ -15,7 +16,7 @@ import monix.execution.CancelableFuture
 // Task is in monix.eval
 import monix.eval.Task
 
-class MonixTaskErrorSpec extends FreeSpec with Matchers {
+class MonixTaskErrorSpec extends AsyncFreeSpec with Matchers {
 
   // TODO - onErrorRestart / If
 
@@ -47,13 +48,7 @@ class MonixTaskErrorSpec extends FreeSpec with Matchers {
       }
 
       val d: Task[Nothing] = failing.delayExecution(1 second)
-
-      val f = failing.runAsync //(r => println(r))
-
-      // will get printed
-      f.onComplete(_ => println("task complete"))
-
-      Await.result(f, 10 seconds)
+      recoverToSucceededIf[IllegalStateException] {failing.runAsync} //(r => println(r)))
     }
 
 
@@ -64,9 +59,7 @@ class MonixTaskErrorSpec extends FreeSpec with Matchers {
       }
       // Even though Monix expects for the arguments given to its operators, like flatMap,
       // to be pure or at least protected from errors, it still catches errors, signaling them on runAsync:
-      val f = t.runAsync
-      val r = Await.result(f, 10 seconds)
-      println(s"printing the result: $r") // will never be printed
+      recoverToSucceededIf[IllegalStateException](t.runAsync)
     }
 
     // In case an error happens in the callback provided to runAsync,
@@ -84,15 +77,16 @@ class MonixTaskErrorSpec extends FreeSpec with Matchers {
     // with -> flatMap
     // . -> map
 
-
     "fails with a timeout" in {
 
       val delayed = Task("hi").delayExecution(10 seconds).timeout(3 seconds)
-      val f: CancelableFuture[Record] = delayed.runAsync
-      f.onComplete(r => println(s"completed: $r"))
 
-      // java.util.concurrent.TimeoutException: Task timed-out after 3 seconds of inactivity
-      val r = Await.result(f, 5 seconds)
+      recoverToSucceededIf[TimeoutException] {
+        val f: CancelableFuture[Record] = delayed.runAsync
+        f.onComplete(r => println(s"completed: $r"))
+        // java.util.concurrent.TimeoutException: Task timed-out after 3 seconds of inactivity
+        f
+      }
     }
 
     "fails with a timeout and recovers using HandleWith" in {
@@ -106,11 +100,10 @@ class MonixTaskErrorSpec extends FreeSpec with Matchers {
       }
 
       val f: CancelableFuture[Record] = recovered.runAsync
-      f.onComplete(r => println(s"completed: $r"))
-
-      // java.util.concurrent.TimeoutException: Task timed-out after 3 seconds of inactivity
-      val r = Await.result(f, 5 seconds)
-      println(s"result: $r")
+      f.onComplete(r => println(s"completed: $r")) // Success(recovered!)
+      f map { res: Serializable =>
+        res should be("recovered!")
+      }
     }
 
     "fails with a timeout and recovers using Handle " in {
@@ -119,58 +112,35 @@ class MonixTaskErrorSpec extends FreeSpec with Matchers {
 
       val recovered = delayed.onErrorHandle {
         case _: TimeoutException => "recovered!"
-        case other => throw other
       }
+
       val f = recovered.runAsync
-
-      f.onComplete(r => println(s"completed: $r"))
-
-      // java.util.concurrent.TimeoutException: Task timed-out after 3 seconds of inactivity
-      val r = Await.result(f, 5 seconds)
-      println(s"result: $r")
+      f.onComplete(r => println(s"completed: $r")) // Success(recovered!)
+      f map { res: Serializable =>
+        res should be("recovered!")
+      }
     }
 
+    val recoverFromISE: (Throwable) => Task[String] = {
+      //(t: Throwable) => t match {
+      case e: IllegalStateException => Task.now("recovered from ISE")
+      case other => Task.raiseError(other)
+    }
 
     "recovering composed" in {
 
-      val etl: Task[List[Response]] = extract(0, 3) flatMap //(tl(_, intToString)) flatMap
-        { _ =>
-        println("failing in flatMap")
-        throw new IllegalStateException("failing in flatMap")
-      }
+      // TODO - seems to be another bug in 2.0-RC7, waiting for confirmation
 
-      val failTask: Task[Nothing] = Task {
-        println("failing")
-        throw new IllegalStateException("failing")
-      }
+      val composedFail: Task[Nothing] = Task.now("x") flatMap { _ => throw new IllegalStateException("failing") }
+      //      val composedFail: Task[Nothing] = Task("x") flatMap { _ => throw new IllegalStateException("failing")}
+      val withHandling: Task[Serializable] = composedFail.onErrorHandleWith(recoverFromISE)
+      withHandling.runAsync map {_ should be("recovered from ISE")}
+    }
 
-      val composedFail: Task[Nothing] = Task { "x" } flatMap { _ => throw new IllegalStateException("failing")}
-
-      // does not recover
-//      val withRecovery: Task[List[Response]] = etl.onErrorRecoverWith { case t: Throwable =>
-//        println(s"failed with $t")
-//        etl
-//      }
-
-      val withHandling: Task[Serializable] = failTask.onErrorHandleWith {
-        case e: IllegalStateException =>
-          println("as expected")
-          Task.now("recovered from ISE")
-//        case t: Throwable =>
-//        println(s"failed with $t. Handling error")
-//        Task.now("recovered")
-      case other =>
-        println(s"unexpected error: $other")
-        Task.raiseError(other)
-      }
-
-      val f = withHandling.runAsync
-      f.onComplete(r => println(s"completed: $r"))
-
-      val r = Await.result(f, 10 seconds)
-      println(s"result: $r")
+    "root cause of bug" in {
+      val f = CancelableFuture.successful(1).map(_+1)
+      f map{ r => r should be(2)}
     }
 
   }
-
 }
