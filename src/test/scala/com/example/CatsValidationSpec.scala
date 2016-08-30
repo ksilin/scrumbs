@@ -34,7 +34,7 @@ class CatsValidationSpec extends FunSpec with Matchers {
     case class Conf(map: Map[String, String]) {
 
       // TODO - this A: Read is implicit, change to other notation
-      def parse[A: Read](key: String): Validated[ConfigError, A] =
+      def parse[A](key: String)(implicit r: Read[A]): Validated[ConfigError, A] =
         map.get(key) match {
           case None => Invalid(MissingConfig(key))
           case Some(value) => Read[A].read(value) match {
@@ -58,7 +58,7 @@ class CatsValidationSpec extends FunSpec with Matchers {
       import cats.Semigroup
       import cats.SemigroupK
       import cats.data.NonEmptyList
-      import cats.std.list._ // For semigroup (append) on List
+      import cats.instances.list._ // For semigroup (append) on List
 
       def parallelValidate[E: Semigroup, A, B, C](v1: Validated[E, A], v2: Validated[E, B])(f: (A, B) => C): Validated[E, C] =
         (v1, v2) match {
@@ -93,7 +93,7 @@ class CatsValidationSpec extends FunSpec with Matchers {
 //      } yield (x, y, z)
 //      println(res)
 
-      import cats.std.all._
+      import cats.instances.all._
       import cats.syntax.cartesian._
 
       // it no worky either

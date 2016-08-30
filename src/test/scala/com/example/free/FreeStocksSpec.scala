@@ -109,7 +109,7 @@ class FreeStocksSpec extends FunSpec with Matchers {
       println(res) // Left("dont sell that)
 
       // TODO - so what do we do with a free monad if we want to get all the errors intead of shortcutting?
-      import cats.std.list._
+      import cats.instances.list._
       import cats.syntax.traverse._
 
 

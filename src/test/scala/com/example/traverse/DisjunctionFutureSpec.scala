@@ -30,11 +30,9 @@ class DisjunctionFutureSpec extends FunSpec with Matchers with LazyLogging {
     }
   }
 
-    describe("cats"){
-
     it("same with cats"){
       import cats.data.Xor
-      import cats.std.future._
+      import cats.instances.future._
       import cats.syntax.bitraverse._
       import cats.Bitraverse
 
@@ -56,5 +54,4 @@ class DisjunctionFutureSpec extends FunSpec with Matchers with LazyLogging {
         x should be(Xor.left(1))
       }
     }
-  }
 }

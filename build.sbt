@@ -5,15 +5,15 @@ version := "1.0"
 scalaVersion := "2.11.8"
 
 resolvers ++= Seq(Resolver.sonatypeRepo("releases")
-, Resolver.sonatypeRepo("snapshots"),
+  , Resolver.sonatypeRepo("snapshots"),
   Resolver.bintrayRepo("projectseptemberinc", "maven"))
 
 addCompilerPlugin("com.milessabin" % "si2712fix-plugin" % "1.2.0" cross CrossVersion.full)
 
 val scalazVersion = "7.2.0"
-val catsVersion = "0.6.0"
-val monixVersion = "2.0-RC7"
-val akkaVersion = "2.4.6"
+val catsVersion = "0.7.0"
+val monixVersion = "2.0-RC11"
+val akkaVersion = "2.4.9"
 
 libraryDependencies ++=
   Seq(
@@ -36,7 +36,7 @@ libraryDependencies ++=
 
     "com.fortysevendeg" %% "fetch" % "0.3.0-SNAPSHOT",
 
-"com.typesafe.akka" %% "akka-actor" % akkaVersion,
+    "com.typesafe.akka" %% "akka-actor" % akkaVersion,
 
     "org.apache.commons" % "commons-compress" % "1.10",
     "com.github.pathikrit" %% "better-files-akka" % "2.14.0",

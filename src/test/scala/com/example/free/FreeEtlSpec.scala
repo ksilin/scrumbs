@@ -8,7 +8,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import cats.free.Free
 import cats.free.Free._
 import cats.{Id, ~>}
-import cats.std.list._
+import cats.instances.list._
 import cats.syntax.traverse._
 
 
@@ -65,7 +65,7 @@ class FreeEtlSpec extends FunSpec with Matchers {
       def simpleEtl(offset: Int, amount: Int): Free[EtlOp, List[Response]] = fetch(offset, amount).flatMap(r => store(r))
 
       import cats.{Id, ~>}
-      import cats.std.list._
+      import cats.instances.list._
       import cats.syntax.traverse._
 
       val etl = for {

@@ -13,25 +13,25 @@ object FutureTimeoutHelper {
 
     import akka.pattern.after
 
+    // default must be of same type
     def orDefault(t: Timeout, default: => T)(implicit system: ActorSystem): Future[T] = {
       implicit val ec = system.dispatcher
-      val delayed = after(t.duration, system.scheduler)(Future.successful(default))
+      val delayed     = after(t.duration, system.scheduler)(Future.successful(default))
       Future firstCompletedOf Seq(f, delayed)
     }
 
-    // TODO - cant get it to work . matches Strign and (String, String) to U
-    // TODO - ask at SUG
+    // default can be of any type, but must use a disjunction here
     def orEitherDefault[U](t: Timeout, default: => U)(implicit system: ActorSystem): Future[Either[U, T]] = {
-      implicit val ec = system.dispatcher
-      val delayed = after(t.duration, system.scheduler)(Future.successful(default))
-      val completed: Future[Any] = Future firstCompletedOf Seq(f, delayed)
-      val res = completed flatMap {
-        case dflt: U => Future {
+      implicit val ec            = system.dispatcher
+      val delayed                = after(t.duration, system.scheduler)(Future.successful(default))
+      val completed = Future firstCompletedOf Seq(f, delayed)
+      val res = completed map {
+        case dflt: U =>
+          println(s"matching $completed with ${dflt.getClass}")
           Left(dflt)
-        }
-        case succ: T => Future {
-          Right(succ)
-        }
+        case originalSuccess: T =>
+          println(s"matching $completed with ${originalSuccess.getClass}")
+          Right(originalSuccess)
       }
       res
     }
