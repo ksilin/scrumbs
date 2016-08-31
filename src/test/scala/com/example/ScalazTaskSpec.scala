@@ -11,7 +11,7 @@ import scalaz._
 import Scalaz._
 import scalaz.concurrent.Task
 
-class TaskSpec extends AsyncFunSpec with Matchers {
+class ScalazTaskSpec extends AsyncFunSpec with Matchers {
 
   describe("Task") {
 
@@ -43,9 +43,8 @@ class TaskSpec extends AsyncFunSpec with Matchers {
 
       val failedBar: Task[String] = Task.fail(ex)
 
-      // TODO - how to test this?
       val r2: \/[Throwable, String] = failedBar.unsafePerformSyncAttempt
-      r2 should be(ex)
+      r2 should be(-\/(ex))
     }
 
     it("should delay / suspend execution") {
@@ -107,14 +106,15 @@ class TaskSpec extends AsyncFunSpec with Matchers {
 
       implicit val service: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 
-      val t: Task[String] = Task {Thread.sleep(1000); "and done"}
+      val longRunning: Task[String] = Task {Thread.sleep(1000); "and done"}
 
+       val timed: Task[String] = longRunning.unsafePerformTimed(50)
 
-       val timed: Task[String] = t.unsafePerformTimed(50)
-
-      // TODO - why does this one fail and no exception is thrown?
-      val ex = intercept[Exception] {timed.unsafePerformSync}
-
+      // TODO - why is no exception is thrown?
+      val ex = intercept[Exception] {
+        val res: String = timed.unsafePerformSync
+        println(s"result from timing out Task: $res")
+      }
       true should be(true)
     }
 

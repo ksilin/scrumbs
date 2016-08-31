@@ -2,7 +2,7 @@ package com.example
 
 import org.scalatest._
 
-class FreeSpecTestDataSpec extends FreeSpec with Matchers with BeforeAndAfter{
+class FreeSpecTestDataSpec extends FreeSpec with Matchers with BeforeAndAfter {
 
   println(suiteName)
   println(testNames)
@@ -16,7 +16,8 @@ class FreeSpecTestDataSpec extends FreeSpec with Matchers with BeforeAndAfter{
 
   "The test" - {
     "contain testdata" in {
-      true should be(false)
+      // TODO - tbc
+       true should be(false)
     }
   }
 }

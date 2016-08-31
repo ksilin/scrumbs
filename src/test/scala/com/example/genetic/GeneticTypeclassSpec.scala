@@ -10,7 +10,7 @@ import org.scalatest.{FreeSpec, Matchers, PropSpec}
 
 class GeneticTypeclassSpec extends FreeSpec with Matchers with PropertyChecks {
 
-  // TODO - nice topic, nice talk, but no code available yetwill wait a bit for it
+  // TODO - nice topic, nice talk, but no code available yet - will wait a bit for it
   // http://noelmarkham.github.io/genetics-scaladays/#/ ~ slide 30
   // https://www.youtube.com/watch?v=lTd3Ep8jGrw - about 26min
 

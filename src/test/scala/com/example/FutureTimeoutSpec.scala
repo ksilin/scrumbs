@@ -19,10 +19,10 @@ class FutureTimeoutSpec extends AsyncFunSpec with Matchers with BeforeAndAfterEa
   val unexpectedTimeoutMsg: String = "unexpected timeout"
 
   def succeedingFuture         = Future.successful("hi").orDefault(10 seconds, unexpectedTimeoutMsg)
-  def timeoutFuture            = Future { Thread.sleep(2000); 42 }
+  def twoSecondsFuture            = Future { Thread.sleep(2000); 42 }
   def timeoutFutureWithDefault = (Future { Thread.sleep(200); 42 }).orDefault(1 millisecond, 23)
 
-  def resFuture: Future[(String, String)] =
+  def combinedFuture: Future[(String, String)] =
     for {
       d <- Future.successful("hi").orDefault(10 seconds, unexpectedTimeoutMsg)
       f <- (Future { Thread.sleep(2000); "awake" }).orDefault(1 second, expectedTimeoutMsg)
@@ -37,7 +37,7 @@ class FutureTimeoutSpec extends AsyncFunSpec with Matchers with BeforeAndAfterEa
 
       it("completing a future of list with individual timeouts - simple") {
         // leave some allowance - if the timeout of Await is shorter than the timeout of the failed Future, all futures fail
-        val res: (String, String) = Await.result(resFuture, 20 seconds)
+        val res: (String, String) = Await.result(combinedFuture, 2 seconds)
         res should be(("hi", expectedTimeoutMsg))
       }
     }
@@ -47,16 +47,16 @@ class FutureTimeoutSpec extends AsyncFunSpec with Matchers with BeforeAndAfterEa
       it("common timeout fail") {
         // without allowance - all futures fail
         val ex = intercept[java.util.concurrent.TimeoutException] {
-          Await.result(resFuture, 1 seconds)
+          Await.result(twoSecondsFuture, 1 seconds)
         }
         ex should have message ("Futures timed out after [1 second]") // needs Future[Assertion]
       }
 
       describe("Either") {
 
-        it("completing a future of list with individual timeouts - common timeout fail - either") {
+        it("mapping to Either on timeout fail") {
           val res: Either[String, Int] = try {
-            Right(Await.result(Future { Thread.sleep(100); 42 }, 1 milli))
+            Right(Await.result(twoSecondsFuture, 1 milli))
           } catch {
             case NonFatal(ex) => Left(s"failed with $ex")
           }
@@ -68,37 +68,35 @@ class FutureTimeoutSpec extends AsyncFunSpec with Matchers with BeforeAndAfterEa
         it("completing a future tuple with combined timeout - default") {
 
           val combinedWithDefault: Future[Either[String, Int]] =
-            timeoutFuture.orEitherDefault[String](1 second, "future timed out")
-          // if the timeout of Await is shorter than the timeout of the failed Future, all futures fail
+            twoSecondsFuture.orEitherDefault[String](1 second, "future timed out")
           val res: Either[String, Int] = Await.result(combinedWithDefault, 2 seconds)
           res should be(Left("future timed out"))
         }
 
         it("failing a future tuple with combined timeout - default") {
           val combinedWithDefault: Future[Either[String, (String, String)]] =
-            resFuture.orEitherDefault[String](1 millisecond, "combined future timed out")
+            combinedFuture.orEitherDefault[String](1 millisecond, "combined future timed out")
           // if the timeout of Await is shorter than the timeout of the failed Future, all futures fail
           val res: Either[String, (String, String)] = Await.result(combinedWithDefault, 20 seconds)
           res should be(Left("combined future timed out"))
         }
       }
 
-      // Try is basically an error-specific Either
+      // Try is an error-specific Either
       describe("Try") {
         it("common timeout fail") {
           val res: Try[(String, String)] = Try {
-            Await.result(resFuture, 1 seconds)
+            Await.result(combinedFuture, 1 seconds)
           }
           res should be('failure) // isFailure
           res shouldBe a[Failure[(String, String)]]
-          // yeah, we should actually be matching
           val x: Throwable = res.asInstanceOf[Failure[(String, String)]].exception
           x should have message "Futures timed out after [1 second]"
         }
 
         it("common timeout success") {
           val res: Try[(String, String)] = Try {
-            Await.result(resFuture, 10 seconds)
+            Await.result(combinedFuture, 10 seconds)
           }
           res shouldBe a[Success[(String, String)]]
           res should be(Success("hi", expectedTimeoutMsg))
