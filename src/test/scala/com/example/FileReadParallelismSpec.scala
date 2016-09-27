@@ -1,12 +1,13 @@
 package com.example
 
 import java.io.{File => JFile}
-import java.nio.file.{Path, Files}
+import java.nio.file.{Files, Path}
 import java.util.stream.Stream
 
 import better.files._
 import org.scalatest._
 import org.slf4j.LoggerFactory
+import util.Timed
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.IndexedSeq
@@ -16,7 +17,7 @@ import scala.concurrent.{Await, Future}
 import scala.io.Source
 import scala.util.Random
 
-class FileReadParallelismSpec extends FunSpec with Matchers{
+class FileReadParallelismSpec extends FunSpec with Matchers with Timed {
 
   val log = LoggerFactory.getLogger(getClass)
   val r = new Random(31)
@@ -36,13 +37,6 @@ class FileReadParallelismSpec extends FunSpec with Matchers{
       file << s"$i * ${r.nextString(10)}"
     }
     file
-  }
-
-  def timed[A](name: String = "")(f: => A) = {
-    val s = System.nanoTime
-    val ret = f
-    println(s"time for $name " + (System.nanoTime - s) / 1e6 + "ms")
-    ret
   }
 
   val file = createFakeFile()

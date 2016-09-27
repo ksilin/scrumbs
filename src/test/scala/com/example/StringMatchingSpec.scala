@@ -2,6 +2,8 @@ package com.example
 
 import org.scalatest.{FunSpec, Matchers}
 
+import scala.util.matching.Regex
+
 class StringMatchingSpec extends FunSpec with Matchers {
 
   describe("pattern matching strings with regexes") {
@@ -56,7 +58,6 @@ class StringMatchingSpec extends FunSpec with Matchers {
       res2 should equal("missed")
     }
 
-    import util.matching.Regex
     implicit class RegexContext(sc: StringContext) {
       def r = new Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
     }
