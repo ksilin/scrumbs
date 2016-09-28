@@ -97,8 +97,8 @@ class Free472Spec extends FreeSpec with MustMatchers {
         implicit def logOps[F[_]](implicit I: Inject[LogOp, F]): LogOps[F] = new LogOps[F]
       }
 
-      type C01        = Coproduct[Interact, DataOp, A]
-      type Application2[A] = Coproduct[LogOps, C01, A]
+      type C01[A]        = Coproduct[Interact, DataOp, A]
+//      type Application2[A] = Coproduct[LogOps, C01, A]
 
       object LogOpsInterpreter extends (LogOp ~> Id) {
         def apply[A](i: LogOp[A]) = i match {
@@ -113,7 +113,7 @@ class Free472Spec extends FreeSpec with MustMatchers {
 //      found   : cats.arrow.FunctionK[[γ]cats.data.Coproduct[LogOp,C01,γ],cats.Id]
 //      required: cats.~>[Application2,cats.Id]
 //      (which expands to)  cats.arrow.FunctionK[Application2,cats.Id]
-      val interpreter: Application2 ~> Id = LogOpsInterpreter or c01Interpreter
+//      val interpreter: Application2 ~> Id = LogOpsInterpreter or c01Interpreter
     }
 
   }
