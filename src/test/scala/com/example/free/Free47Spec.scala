@@ -3,7 +3,7 @@ package com.example.free
 import cats._
 import cats.free._
 import cats.free.Inject
-import cats.data.Coproduct
+import cats.data.{ Coproduct, Xor }
 import cats.implicits._
 import monix.eval.Task
 import simulacrum.typeclass
@@ -38,7 +38,6 @@ class Free47Spec extends FreeSpec with MustMatchers {
       _   <- tell(s"you said $cat")
     } yield ()
 
-    // TODO - why I cannot return
     def interpreter: Interact ~> Id = new (Interact ~> Id) {
       def apply[A](fa: Interact[A]): Id[A] = fa match {
         case Ask(prompt) => println(prompt); "Tom" // StdIn.readLine()
@@ -68,13 +67,6 @@ class Free47Spec extends FreeSpec with MustMatchers {
         def addCat(a: String): Free[DataOp, String] = Free.liftF[DataOp, String](AddCat(a))
         def getAllCats: Free[DataOp, List[String]]  = Free.liftF[DataOp, List[String]](GetAllCats())
       }
-
-      import DataOps._
-
-      // Error:(70, 11) type mismatch;
-//      found   : cats.free.Free[DataOp,Unit]
-//      required: cats.free.Free[Interact,?]
-//      _ <- addCat(cat)
 
       """val program = for {
         cat <- ask("kitty name?")
@@ -108,12 +100,11 @@ class Free47Spec extends FreeSpec with MustMatchers {
       implicit def dataOps[F[_]](implicit I: Inject[DataOp, F]): DataOps[F] = new DataOps[F]
     }
 
-    //  parametrizing the ctors to F[_] allows to obtain Free mondas on demand that are parametrized to same Functor, in this case - Application
+    // parametrizing the ctors to F[_] allows to obtain Free mondas on demand that are parametrized to same Functor, in this case - Application
 
-//    The required Inject instance is resposible for injecting the operation inside a coproduct
+    // The required Inject instance is resposible for injecting the operation inside a coproduct
 
     // so, what do we pass to our foldMap now? Instead of Interact ~> Id or DataOps ~> Id it needs to have the shape of Application ~> Id
-    //      program.foldMap()
 
     object InteractInterpreter extends (Interact ~> Id) {
       def apply[A](i: Interact[A]) = i match {
@@ -130,7 +121,7 @@ class Free47Spec extends FreeSpec with MustMatchers {
         case GetAllCats() => memDataSet.toList
       }
     }
-    // or courtesy of cats.arrow.FunktionK
+    // courtesy of cats.arrow.FunktionK
     val interpreter2: Application ~> Id = InteractInterpreter or InMemoryDataOpInterpreter
 
     "now composition works" in {
@@ -153,12 +144,11 @@ class Free47Spec extends FreeSpec with MustMatchers {
     // excercise for the reader - add more algebras - they compose
 
     sealed trait LogOp[A]
-    case class Info(msg: String)  extends LogOp[Unit]
+    case class Error(msg: String) extends LogOp[Unit]
     case class Debug(msg: String) extends LogOp[Unit]
 
     class LogOps[F[_]](implicit I: Inject[LogOp, F]) {
-      def info(msg: String) = Free.inject(Info(msg))
-      // def info(msg: String): Free[F, Unit] = Free.inject[LogOp, F](Info(msg))
+      def error(msg: String) = Free.inject(Error(msg))
       def debug(msg: String) = Free.inject(Debug(msg))
     }
 
@@ -168,7 +158,7 @@ class Free47Spec extends FreeSpec with MustMatchers {
 
     object LogInterpreter extends (LogOp ~> Id) {
       def apply[A](l: LogOp[A]) = l match {
-        case Info(msg)  => println(s"info: $msg")
+        case Error(msg) => println(s"error: $msg")
         case Debug(msg) => println(s"debug: $msg")
       }
     }
@@ -176,31 +166,27 @@ class Free47Spec extends FreeSpec with MustMatchers {
     // coproducts & interpreters compose
     "and a third algebra is factored in" in {
 
-      type C01[A] = Coproduct[Interact, DataOp, A]
+      type C01[A]          = Coproduct[Interact, DataOp, A]
+      type Application2[A] = Coproduct[LogOp, C01, A]
 
-      // Error:(180, 30) kinds of the type arguments (LogOps,C01,A) do not conform to the expected kinds of the type parameters (type F,type G,type A) in class Coproduct.
-//      LogOps's type parameters do not match type F's expected parameters:
-//      type F has one type parameter, but type _ has none
-//      type Application2[A] = Coproduct[LogOps, C01, A]
+      val c01Interpreter: C01 ~> Id              = InteractInterpreter or InMemoryDataOpInterpreter
+      val loggingInterpreter: Application2 ~> Id = LogInterpreter or c01Interpreter
 
-      val c01Interpreter: C01 ~> Id = InteractInterpreter or InMemoryDataOpInterpreter
-//      val loggingInterpreter: Application2 ~> Id = LogInterpreter or c01Interpreter
-
-//      val loggingAppInterpreter: App2 ~> Id = LogInterpreter or appInterpreter
-
-      // TODO -
-//      def prgrm(implicit I: Interacts[Application2], D: DataOps[Application2]): Free[Application2, Unit] = {
-//        import I._, D._
-//        for {
-//          cat  <- ask("kitty name?")
-//          _    <- addCat(cat)
-//          cats <- getAllCats()
-//          _    <- tell("all cats: " + cats.mkString(", "))
-//        } yield ()
-//      }
-//      val evaluated = prgrm foldMap loggingInterpreter
-//      println(s"combined algebras: $evaluated")
-
+      def prgrm(implicit I: Interacts[Application2],
+                D: DataOps[Application2],
+                L: LogOps[Application2]): Free[Application2, Unit] = {
+        import I._, D._, L._
+        for {
+          cat  <- ask("kitty name?")
+          _    <- debug(s"cat's name was $cat")
+          _    <- addCat(cat)
+          cats <- getAllCats()
+          _    <- debug(s"fetched all cats: $cats")
+          _    <- tell("all cats: " + cats.mkString(", "))
+        } yield ()
+      }
+      val evaluated = prgrm foldMap loggingInterpreter
+      println(s"combined algebras: $evaluated")
     }
 
     // TODO - we have used the Id for illustrative purposes - in reality we would rather be using Future or Task to capture effects
@@ -216,14 +202,79 @@ class Free47Spec extends FreeSpec with MustMatchers {
 
     class Interpreters[M[_]: Capture] {
 
-//      def InteractInterpreter: Interact ~> M = new (Interact ~> M) {
+      def InteractInterpreter: Interact ~> M = new (Interact ~> M) {
+        def apply[A](i: Interact[A]) = i match {
+          case Ask(prompt) => Capture[M].capture({ println(prompt); "Tom" }) // StdIn.readLine()
+          case Tell(msg)   => Capture[M].capture({ println(msg) })
+        }
+      }
 
-//        def apply[A](i: Interact[A]) = i match {
-//          case Ask(prompt) => Capture[M].capture({ println(prompt); "Tom" }) // StdIn.readLine()
-//          case Tell(msg)   => Capture[M].capture({ println(msg) })
-//        }
-//      }
+      def InMemoryDataOpInterpreter: DataOp ~> M = new (DataOp ~> M) {
+        private[this] val memDataSet = new ListBuffer[String]
 
+        def apply[A](fa: DataOp[A]) = fa match {
+          case AddCat(a)    => Capture[M].capture({ memDataSet.append(a); a })
+          case GetAllCats() => Capture[M].capture(memDataSet.toList)
+        }
+      }
+
+      def interpreter: Application ~> M =
+        InteractInterpreter or InMemoryDataOpInterpreter
+    }
+
+    // M can be any type ctor for which a Capture instance exists, we can create interpreters for Task, Xor, Try
+    // or anything else that captures effectful computation
+
+    import monix.eval.Task
+    import monix.cats._
+
+    implicit val taskCaptureInstance = new Capture[Task] {
+      override def capture[A](a: => A): Task[A] = Task.evalOnce(a)
+    }
+
+    import cats.implicits._
+
+    type Result[A] = Throwable Xor A
+
+    implicit val xorCaptureInstance = new Capture[Result] {
+      override def capture[A](a: => A): Result[A] = Xor.catchNonFatal(a)
+    }
+
+    implicit val tryCaptureInstance = new Capture[Try] {
+      override def capture[A](a: => A): Try[A] = Try(a)
+    }
+
+    val taskInterpreter = new Interpreters[Task].interpreter
+    val xorInterpreter  = new Interpreters[Result].interpreter
+    val tryInterpreter  = new Interpreters[Try].interpreter
+
+    "any type constructor with an instance can be used to capture eventful computation" in {
+
+      def prgrm2(implicit I: Interacts[Application], D: DataOps[Application]): Free[Application, Unit] = {
+
+        import I._, D._
+
+        for {
+          cat <- ask("kitty name?")
+          _ <- addCat(cat)
+          cats <- getAllCats()
+          _ <- tell("all cats: " + cats.mkString(", "))
+        } yield ()
+      }
+
+      val xorProgram: Result[Unit] = prgrm2 foldMap xorInterpreter
+      val taskProgram: Task[Unit] = prgrm2 foldMap taskInterpreter
+      val tryProgram: Try[Unit] = prgrm2 foldMap tryInterpreter
+
+      println("xor: ")
+      println(xorProgram)
+
+      println("task: ")
+      println(taskProgram)
+
+      println("try: ")
+      println(tryProgram)
+      throw new RuntimeException("ggkgkgu")
     }
 
   }
