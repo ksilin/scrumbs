@@ -1,9 +1,10 @@
 package com.example.kleisli
 
-import org.scalatest.{ FreeSpec, MustMatchers }
-import cats.{ FlatMap, Id }
+import cats.Id
+import org.scalatest.{FreeSpec, MustMatchers}
 import cats.implicits._
-import cats.data.{ Kleisli, Writer, WriterT }
+import cats.instances.tuple._
+import cats.data.{Kleisli, Writer, WriterT}
 
 class KleisliFirstSpec extends FreeSpec with MustMatchers {
 
@@ -20,13 +21,13 @@ class KleisliFirstSpec extends FreeSpec with MustMatchers {
       println(h(5))
     }
 
-    // but we cannot create a function which is a combination of both using regular rfunction composition:
+    // but we cannot create a function which is a combination of both using regular function composition:
 
-    "andThen dows not work, b accepts a single int" in {
+    "andThen does not work, g accepts a single int" in {
       "val h = f.andThen(g)" mustNot typeCheck //compile
     }
 
-    "compose dows not work, b accepts a single int" in {
+    "compose does not work, g accepts a single int" in {
       "val h = g.compose(f)" mustNot typeCheck //compile
     }
 
@@ -43,44 +44,51 @@ class KleisliFirstSpec extends FreeSpec with MustMatchers {
       val gs: (Int) => (String, Int) = (j: Int) => (s"g on $j ", j * 2)
 
       // https://github.com/typelevel/cats/blob/master/core/src/main/scala/cats/instances/tuple.scala
-      // def flatMap[A, B](fa: (X, A))(f: A => (X, B)): (X, B)
+//       def flatMap[A, B](fa: (X, A))(f: A => (X, B)): (X, B)
 
-      // looks like flatMap for tuple2 uses only the second element and discards the first one
+      // looks like flatMap for tuple2 uses only the.second element and discards the first one
 
       //    t flatMap( (i: Int, s: String) => (i * 2, "$s multiplied"))
       //    t flatMap( (i: Int) => (i * 2, "multiplied"))
-      val withFlatMap = fs(7) flatMap ((i: Int) => (s"multiplied $i by 2", i * 2))
-      println(withFlatMap)
+//      val withFlatMap = fs(7) flatMap ((i: Int) => (s"multiplied $i by 2", i * 2))
+//      println(withFlatMap)
 
 //      val kfs: Kleisli[(String, Int), Int, Int] = Kleisli(fs) // no type param, expected one
 //      val kfs: Kleisli[Tuple2, Int, Int] = Kleisli(fs) // two type params, expected one
 //      val kfs: Kleisli[Any, Int, Int] = Kleisli(fs) // Kleisli is invariant in F
 //      val kfs: Kleisli[Nothing, Nothing, Nothing] = Kleisli(fs) // Kleisli is invariant in F - inferred by IJ
-      val kfs = Kleisli(fs)
 
-      val x = kfs.run(6)
-      println("running kleisli: " + x)
+//      Error:(59, 17) no type parameters for method apply: (run: A => F[B])cats.data.Kleisli[F,A,B] in object Kleisli exist so that it can be applied to arguments (Int => (String, Int))
+//      --- because ---
+//      argument expression's type is not compatible with formal parameter type;
+//      found   : Int => (String, Int)
+//        required: ?A => ?F[?B]
+//      [33mval[39m kfs = Kleisli(fs)
+//      val kfs = Kleisli(fs)
 
-      val kgs = Kleisli(gs)
-      val y   = kgs.run(6)
-      println("running kleisli: " + y)
+//      val x = kfs.run(6)
+//      println("running kleisli: " + x)
+
+//      val kgs = Kleisli(gs)
+//      val y   = kgs.run(6)
+//      println("running kleisli: " + y)
 
       // Error:(75, 27) type mismatch;
 //      found   : cats.data.Kleisli[[+(some other)T2(in class Tuple2)](String, (some other)T2(in class Tuple2)),Int,Int]
 //      required: Int => cats.data.Kleisli[[+T2(in class Tuple2)](String, T2(in class Tuple2)),Int,?]
 //      val h = kfs.flatMap(kgs)
 
-      // TODO - I understand how the integers are composed, but not how the strings are getting passen and concatenated
+      // TODO - I understand how the integers are composed, but not how the strings are getting passed and concatenated
 
-      val h              = kgs.compose(kfs)
-      val composedResult = h.run(3)
-      println(composedResult)
-      composedResult mustBe ("f on 3 g on 4 ", 8)
+//      val h              = kgs.compose(kfs)
+//      val composedResult = h.run(3)
+//      println(composedResult)
+//      composedResult mustBe ("f on 3 g on 4 ", 8)
 
-      val i             = kfs.andThen(kgs)
-      val andThenResult = i.run(3)
-      println(andThenResult)
-      andThenResult mustBe ("f on 3 g on 4 ", 8)
+//      val i             = kfs.andThen(kgs)
+//      val andThenResult = i.run(3)
+//      println(andThenResult)
+//      andThenResult mustBe ("f on 3 g on 4 ", 8)
     }
 
     "same composition using the cats Writer" in {

@@ -19,7 +19,7 @@ class ObservablePrimerSpec extends FunSpec with Matchers {
 
     it("should work") {
 
-      val tick = Observable.interval(1 second)
+      val tick = Observable.interval(1.second)
         .filter( _ % 2 == 0)
         .map(_ * 2)
         .flatMap { x =>
@@ -31,7 +31,7 @@ class ObservablePrimerSpec extends FunSpec with Matchers {
       val t: Cancelable = tick.subscribe()
 
       val f = Future { Thread.sleep(8000); 10 }
-      val r = Await.result(f, 10 seconds)
+      val r = Await.result(f, 10.seconds)
       r should be(10)
     }
   }

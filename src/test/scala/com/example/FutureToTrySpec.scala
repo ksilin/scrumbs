@@ -41,7 +41,7 @@ class FutureToTrySpec extends AsyncFunSpec with Matchers with BeforeAndAfterEach
   describe("Future sequence reaping") {
 
     it("completing a future of list with individual timeouts - blocking") {
-      val res: List[Try[String]] = Await.result(seq, 20 seconds)
+      val res: List[Try[String]] = Await.result(seq, 20.seconds)
       val successes: List[String] = res.collect { case Success(x) => x }
       val failures: List[Throwable] = res.collect { case Failure(x) => x }
       successes should be(List("hi"))

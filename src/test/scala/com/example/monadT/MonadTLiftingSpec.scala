@@ -1,6 +1,5 @@
 package com.example.monadT
 
-
 import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.{FunSpec, Matchers}
 
@@ -13,7 +12,7 @@ class MonadTLiftingSpec extends FunSpec with Matchers with LazyLogging {
 
     // http://stackoverflow.com/questions/31517895/scala-futureoptiont-un-packing
 
-    it(" with scalaz") {
+    it("with scalaz") {
 
       import scalaz._
       import Scalaz._

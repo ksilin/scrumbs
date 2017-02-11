@@ -8,7 +8,7 @@ import Scalaz._
 
 class MonadTransformerSpec extends FunSpec with Matchers with LazyLogging {
 
-  describe("monad transformation as explained by unserscore") {
+  describe("monad transformation as explained by underscore") {
 
     // http://underscore.io/blog/posts/2013/12/20/scalaz-monad-transformers.html
 
@@ -22,7 +22,7 @@ class MonadTransformerSpec extends FunSpec with Matchers with LazyLogging {
       // unwrapping twice to do sth with the numeric result is sth we want to avoid
 
       val transformed: Result[String] = for{
-        rOpt: Option[Int] <- rEither
+        rOpt <- rEither
       } yield {
         for {
           r: Int <- rOpt

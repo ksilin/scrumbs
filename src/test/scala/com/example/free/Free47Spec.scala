@@ -2,12 +2,10 @@ package com.example.free
 
 import cats._
 import cats.free._
-import cats.free.Inject
-import cats.data.{ Coproduct, Xor }
+import simulacrum.typeclass
+import cats.data.Coproduct
 import cats.implicits._
 import monix.eval.Task
-import simulacrum.typeclass
-import monix.cats._
 
 import scala.util.Try
 import org.scalatest.{ FreeSpec, MustMatchers }
@@ -193,88 +191,87 @@ class Free47Spec extends FreeSpec with MustMatchers {
 
     // TODO - what do I do when I want to branch out into parallel execution? - Free Applicatives probably, but how do I do it?
 
-    import simulacrum.typeclass
 
-    @typeclass
-    trait Capture[M[_]] {
-      def capture[A](a: => A): M[A]
-    }
+    type Result[A] = Throwable Either A
 
-    class Interpreters[M[_]: Capture] {
-
-      def InteractInterpreter: Interact ~> M = new (Interact ~> M) {
-        def apply[A](i: Interact[A]) = i match {
-          case Ask(prompt) => Capture[M].capture({ println(prompt); "Tom" }) // StdIn.readLine()
-          case Tell(msg)   => Capture[M].capture({ println(msg) })
-        }
-      }
-
-      def InMemoryDataOpInterpreter: DataOp ~> M = new (DataOp ~> M) {
-        private[this] val memDataSet = new ListBuffer[String]
-
-        def apply[A](fa: DataOp[A]) = fa match {
-          case AddCat(a)    => Capture[M].capture({ memDataSet.append(a); a })
-          case GetAllCats() => Capture[M].capture(memDataSet.toList)
-        }
-      }
-
-      def interpreter: Application ~> M =
-        InteractInterpreter or InMemoryDataOpInterpreter
-    }
-
-    // M can be any type ctor for which a Capture instance exists, we can create interpreters for Task, Xor, Try
-    // or anything else that captures effectful computation
-
-    import monix.eval.Task
-    import monix.cats._
-
-    implicit val taskCaptureInstance = new Capture[Task] {
-      override def capture[A](a: => A): Task[A] = Task.evalOnce(a)
-    }
-
-    import cats.implicits._
-
-    type Result[A] = Throwable Xor A
-
-    implicit val xorCaptureInstance = new Capture[Result] {
-      override def capture[A](a: => A): Result[A] = Xor.catchNonFatal(a)
-    }
-
-    implicit val tryCaptureInstance = new Capture[Try] {
-      override def capture[A](a: => A): Try[A] = Try(a)
-    }
-
-    val taskInterpreter = new Interpreters[Task].interpreter
-    val xorInterpreter  = new Interpreters[Result].interpreter
-    val tryInterpreter  = new Interpreters[Try].interpreter
-
-    "any type constructor with an instance can be used to capture eventful computation" in {
-
-      def prgrm2(implicit I: Interacts[Application], D: DataOps[Application]): Free[Application, Unit] = {
-
-        import I._, D._
-
-        for {
-          cat <- ask("kitty name?")
-          _ <- addCat(cat)
-          cats <- getAllCats()
-          _ <- tell("all cats: " + cats.mkString(", "))
-        } yield ()
-      }
-
-      val xorProgram: Result[Unit] = prgrm2 foldMap xorInterpreter
-      val taskProgram: Task[Unit] = prgrm2 foldMap taskInterpreter
-      val tryProgram: Try[Unit] = prgrm2 foldMap tryInterpreter
-
-      println("xor: ")
-      println(xorProgram)
-
-      println("task: ")
-      println(taskProgram)
-
-      println("try: ")
-      println(tryProgram)
-      throw new RuntimeException("ggkgkgu")
+    "now with typeclasses any type constructor with an instance can be used to capture eventful computation" in {
+//      @typeclass
+//      trait Capture[M[_]] {
+//        def capture[A](a: => A): M[A]
+//      }
+//
+//      class Interpreters[M[_] : Capture] {
+//
+//        def InteractInterpreter: Interact ~> M = new (Interact ~> M) {
+//          def apply[A](i: Interact[A]) = i match {
+//            case Ask(prompt) => Capture[M].capture({
+//              println(prompt); "Tom"
+//            }) // StdIn.readLine()
+//            case Tell(msg) => Capture[M].capture({
+//              println(msg)
+//            })
+//          }
+//        }
+//
+//        def InMemoryDataOpInterpreter: DataOp ~> M = new (DataOp ~> M) {
+//          private[this] val memDataSet = new ListBuffer[String]
+//
+//          def apply[A](fa: DataOp[A]) = fa match {
+//            case AddCat(a) => Capture[M].capture({
+//              memDataSet.append(a); a
+//            })
+//            case GetAllCats() => Capture[M].capture(memDataSet.toList)
+//          }
+//        }
+//
+//        def interpreter: Application ~> M =
+//          InteractInterpreter or InMemoryDataOpInterpreter
+//      }
+//
+//       M can be any type ctor for which a Capture instance exists, we can create interpreters for Task, Either, Try
+//       or anything else that captures effectful computation
+//
+//      implicit val taskCaptureInstance = new Capture[Task] {
+//        override def capture[A](a: => A): Task[A] = Task.evalOnce(a)
+//      }
+//
+//      implicit val eitherCaptureInstance = new Capture[Result] {
+//        override def capture[A](a: => A): Result[A] = Either.catchNonFatal(a)
+//      }
+//
+//      implicit val tryCaptureInstance = new Capture[Try] {
+//        override def capture[A](a: => A): Try[A] = Try(a)
+//      }
+//
+//      val taskInterpreter = new Interpreters[Task].interpreter
+//      val eitherInterpreter = new Interpreters[Result].interpreter
+//      val tryInterpreter = new Interpreters[Try].interpreter
+//
+//      def prgrm2(implicit I: Interacts[Application], D: DataOps[Application]): Free[Application, Unit] = {
+//
+//        import I._, D._
+//
+//        for {
+//          cat <- ask("kitty name?")
+//          _ <- addCat(cat)
+//          cats <- getAllCats()
+//          _ <- tell("all cats: " + cats.mkString(", "))
+//        } yield ()
+//      }
+//
+//      val eitherProgram: Result[Unit] = prgrm2 foldMap eitherInterpreter
+//      val taskProgram: Task[Unit] = prgrm2 foldMap taskInterpreter
+//      val tryProgram: Try[Unit] = prgrm2 foldMap tryInterpreter
+//
+//      println("either: ")
+//      println(eitherProgram)
+//
+//      println("task: ")
+//      println(taskProgram)
+//
+//      println("try: ")
+//      println(tryProgram)
+//      throw new RuntimeException("ggkgkgu")
     }
 
   }

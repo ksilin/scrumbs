@@ -25,7 +25,7 @@ class EitherVsTrySpec extends FunSpec with Matchers {
 
         val maybeDataFuture: Future[Either[Throwable, Int] with Product with Serializable] = result.map(Right(_)).recover { case x => Left(x) }
 
-        val maybeData: Either[Throwable, Int] with Product with Serializable = Await.result(maybeDataFuture, 10 seconds)
+        val maybeData: Either[Throwable, Int] with Product with Serializable = Await.result(maybeDataFuture, 10.seconds)
 
         val recovered = maybeData match {
           case Left(t)  => s"failure: $t"
@@ -40,7 +40,7 @@ class EitherVsTrySpec extends FunSpec with Matchers {
 
         val maybeDataFuture: Future[Try[Int] with Product with Serializable] = result.map(Success(_)).recover { case x => Failure(x) }
 
-        val maybeData: Try[Int] with Product with Serializable = Await.result(maybeDataFuture, 10 seconds)
+        val maybeData: Try[Int] with Product with Serializable = Await.result(maybeDataFuture, 10.seconds)
 
         // TODO - ok, but how do we get the failure
         val mapped: String = maybeData.map(i => i.toString).getOrElse(s"failure")

@@ -47,7 +47,7 @@ class MonixTaskErrorSpec extends AsyncFreeSpec with Matchers {
         throw new IllegalStateException("kaboom")
       }
 
-      val d: Task[Nothing] = failing.delayExecution(1 second)
+      val d: Task[Nothing] = failing.delayExecution(1.second)
       recoverToSucceededIf[IllegalStateException] {failing.runAsync} //(r => println(r)))
     }
 
@@ -79,20 +79,20 @@ class MonixTaskErrorSpec extends AsyncFreeSpec with Matchers {
 
     "fails with a timeout" in {
 
-      val delayed = Task("hi").delayExecution(10 seconds).timeout(3 seconds)
+      val delayed = Task("hi").delayExecution(10.seconds).timeout(3.seconds)
 
       recoverToSucceededIf[TimeoutException] {
         val f: CancelableFuture[Record] = delayed.runAsync
         f.onComplete(r => println(s"completed: $r"))
-        // java.util.concurrent.TimeoutException: Task timed-out after 3 seconds of inactivity
+        // java.util.concurrent.TimeoutException: Task timed-out after 3.seconds of inactivity
         f
       }
     }
 
     "fails with a timeout and recovers using HandleWith" in {
 
-      val delayed = Task("hi").delayExecution(10 seconds)
-      val timedout: Task[Record] = delayed.timeout(3 seconds)
+      val delayed = Task("hi").delayExecution(10.seconds)
+      val timedout: Task[Record] = delayed.timeout(3.seconds)
 
       val recovered = timedout.onErrorHandleWith {
         case _: TimeoutException => Task.now("recovered!")
@@ -108,7 +108,7 @@ class MonixTaskErrorSpec extends AsyncFreeSpec with Matchers {
 
     "fails with a timeout and recovers using Handle " in {
 
-      val delayed = Task("hi").delayExecution(10 seconds).timeout(3 seconds)
+      val delayed = Task("hi").delayExecution(10.seconds).timeout(3.seconds)
 
       val recovered = delayed.onErrorHandle {
         case _: TimeoutException => "recovered!"

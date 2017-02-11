@@ -6,7 +6,7 @@ import org.scalatest.{FunSpec, Matchers}
 
 class CatsValidationSpec extends FunSpec with Matchers {
 
-  describe("cats Validated & Xor") {
+  describe("cats Validated & Either") {
 
     trait Read[A] {def read(s: String): Option[A]}
 
@@ -97,9 +97,9 @@ class CatsValidationSpec extends FunSpec with Matchers {
       import cats.syntax.cartesian._
 
       // it no worky either
-      // no |@| syntax for Validated or Xor
+      // no |@| syntax for Validated or Either
 //      (v1 |@| v2)
-      //      val xors = (v1.toXor |@| v2.toXor)
+      //      val eithers = (v1.toEither |@| v2.toEither)
       //      val nels = v3 |@| v4
 
       val eithers = (v1.toEither |@| v2.toEither)

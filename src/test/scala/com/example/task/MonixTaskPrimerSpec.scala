@@ -78,7 +78,7 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
       once.runAsync // no effect
 
       // equiv to a fn - will try to execute synchronously
-      val getResultAlways: Task[String] = Task.evalAlways {
+      val getResultAlways: Task[String] = Task.eval {
         println("effect fn");
         "always"
       }
@@ -102,7 +102,7 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
       println(tf.runAsync) // new instance
 
       // guarantees async exec
-      Task.fork(Task.evalAlways(println("effect fn")))
+      Task.fork(Task.eval(println("effect fn")))
     }
   }
 
@@ -139,9 +139,9 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
 
       // smallest possible tick?
       //      ts.tick(1 nanosecond)
-      ts.tick(11 second)
+      ts.tick(11.second)
 
-      val r = Await.result(f, 10 seconds)
+      val r = Await.result(f, 10.seconds)
       println(r)
     }
 
@@ -168,11 +168,11 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
 
       // smallest possible tick?
       //      ts.tick(1 nanosecond)
-      ts.tick(1 second) // wihtRecovery fails here and does not recover
-      ts.tick(1 second)
-      ts.tick(1 second)
+      ts.tick(1.second) // wihtRecovery fails here and does not recover
+      ts.tick(1.second)
+      ts.tick(1.second)
 
-      val r = Await.result(f, 10 seconds)
+      val r = Await.result(f, 10.seconds)
     }
 
   }

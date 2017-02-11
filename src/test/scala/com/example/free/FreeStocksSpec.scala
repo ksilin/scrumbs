@@ -4,8 +4,6 @@ import java.util.UUID
 
 import org.scalatest.{FunSpec, Matchers}
 
-import scala.concurrent.Future
-
 // not sure why start with this one, but I do:
 
 // http://perevillega.com/understanding-free-monads
@@ -37,6 +35,7 @@ class FreeStocksSpec extends FunSpec with Matchers {
 
     import cats.free.Free
     import cats.free.Free._
+    import cats.implicits._
 
     // turning our Buy and Sell into sth we can run
     type OrdersF[A] = Free[Orders, A]
@@ -59,7 +58,7 @@ class FreeStocksSpec extends FunSpec with Matchers {
 
 
       // now we need an interpreter (natural transformation) to actually run things
-      // use an interpreter to obtain a monad with yout aresult (option, future, xor)
+      // use an interpreter to obtain a monad with yout aresult (option, future, either)
 
       // Id is the simplest monad - effect of having no effect
       // ~> is syntax sugar for natural transformation
@@ -85,22 +84,19 @@ class FreeStocksSpec extends FunSpec with Matchers {
       // execute by invoking foldMap
       trade2.foldMap(orderPrinter)
 
-      import cats.data.Xor
-      import cats.syntax.xor._
-
-      // sth like railway oriented programming - using Xor
-      // same issue as with monad transformers & Xor
-      // ~> expects G[_], but Xor is Xor[+A, +B]
-      type ErrorOr[A] = Xor[String, A]
+      // sth like railway oriented programming - using Either
+      // same issue as with monad transformers & Either
+      // ~> expects G[_], but Either is Either[+A, +B]
+      type ErrorOr[A] = Either[String, A]
 
       def stringInterpreter: Orders ~> ErrorOr =
         new (Orders ~> ErrorOr) {
           def apply[A](fa: Orders[A]): ErrorOr[A] = fa match {
             case Buy(stock, amount) =>
-              // expression fo type Xor[Nothing, String] does not conform to expected type ErrorOn[A]
-              s"$stock - $amount".right
+              // expression of type Either[Nothing, String] does not conform to expected type ErrorOn[A]
+              Right(s"$stock - $amount")//.right
             case Sell(stock, amount) =>
-              "dont sell that!".left
+              Left("dont sell that!")//.left
           }
         }
 
@@ -209,7 +205,7 @@ class FreeStocksSpec extends FunSpec with Matchers {
       }
 
       // we can create the new interpreter by combining existing ones
-      // 'or' comes from the NaturalTransformtion trait, uses Coproduct & Xor
+      // 'or' comes from the NaturalTransformtion trait, uses Coproduct & Either
       def orderAndLogInterpreter: TradeApp ~> Id = orderPrinter or logPrinter
 
       println(" --- trading and logging")

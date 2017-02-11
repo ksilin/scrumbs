@@ -31,12 +31,12 @@ class FutureCombinationSpec extends AsyncFunSpec with Matchers with BeforeAndAft
 //      recoverToSucceededIf[Exception] {resFuture}
       val ex = recoverToExceptionIf[Exception] { resFuture }
 
-//      val ex: Exception = intercept[Exception] {Await.result(resFuture, 1 second)}
+//      val ex: Exception = intercept[Exception] {Await.result(resFuture, 1.second)}
       ex map { e =>
         e should have message (errorMsg)
       }
     }
-    // an [Exception] should be thrownBy {Await.result(resFuture, 1 second)} works as well, bit returns an Assertion
+    // an [Exception] should be thrownBy {Await.result(resFuture, 1.second)} works as well, bit returns an Assertion
     // or, simpler: assertThrows[Exception], also returns an Assertion
 
     it("should recover with another future") {
@@ -77,7 +77,7 @@ class FutureCombinationSpec extends AsyncFunSpec with Matchers with BeforeAndAft
 
       val sequence: Future[List[String]] = Future.sequence(withRecovery)
 
-//      val res: List[String] = Await.result(sequence, 1 second) // times out. Why?
+//      val res: List[String] = Await.result(sequence, 1.second) // times out. Why?
       sequence.map(l => l should be(List("hi", "failed with: java.lang.Exception: boom!")))
     }
   }

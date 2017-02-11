@@ -26,7 +26,7 @@ class FutureForCompParallelismSpec extends FunSpec with Matchers {
         e <- Future { Thread.sleep(100); "five"}
       } yield (a, b, c, d, e)
 
-      val res: (String, String, String, String, String) = Await.result(resFuture, 10 second)
+      val res: (String, String, String, String, String) = Await.result(resFuture, 10.second)
 
       val elapsed = System.currentTimeMillis - start
       println(s"elapsed in for comp: $elapsed")
@@ -45,7 +45,7 @@ class FutureForCompParallelismSpec extends FunSpec with Matchers {
         e <- Future { Thread.sleep(100); "five"}
       } yield (a)
 
-      val res: String = Await.result(resFuture, 10 second)
+      val res: String = Await.result(resFuture, 10.second)
 
       val elapsed = System.currentTimeMillis - start
       println(s"elapsed in for comp: $elapsed")
@@ -69,7 +69,7 @@ class FutureForCompParallelismSpec extends FunSpec with Matchers {
         ee <- e
       } yield (aa, bb, cc, dd, ee)
 
-      val res: (String, String, String, String, String) = Await.result(resFuture, 10 second)
+      val res: (String, String, String, String, String) = Await.result(resFuture, 10.second)
 
       val elapsed = System.currentTimeMillis - start
       println(s"elapsed pre for comp: $elapsed")
@@ -87,7 +87,7 @@ class FutureForCompParallelismSpec extends FunSpec with Matchers {
       val e = Future { Thread.sleep(100); "five"}
       val futures = Future.sequence(List(a, b, c, d, e))
 
-      val res: List[String] = Await.result(futures, 10 second)
+      val res: List[String] = Await.result(futures, 10.second)
 
       val elapsed = System.currentTimeMillis - start
       println(s"elapsed list: $elapsed")
@@ -106,7 +106,7 @@ class FutureForCompParallelismSpec extends FunSpec with Matchers {
         Future { Thread.sleep(100); "five"}
       ))
 
-      val res: List[String] = Await.result(futures, 10 second)
+      val res: List[String] = Await.result(futures, 10.second)
 
       val elapsed = System.currentTimeMillis - start
       println(s"elapsed list: $elapsed")
