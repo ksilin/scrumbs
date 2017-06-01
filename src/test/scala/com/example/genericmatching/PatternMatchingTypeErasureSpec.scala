@@ -1,6 +1,6 @@
-package com.example
+package com.example.genericmatching
 
-import org.scalatest.{FlatSpec, FunSpec, Matchers}
+import org.scalatest.{FlatSpec, Matchers}
 
 class PatternMatchingTypeErasureSpec extends FlatSpec with Matchers {
 

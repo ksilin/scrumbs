@@ -1,4 +1,4 @@
-package com.example
+package com.example.future
 
 import org.scalatest._
 

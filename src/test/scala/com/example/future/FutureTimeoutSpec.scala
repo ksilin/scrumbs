@@ -1,16 +1,17 @@
-package com.example
+package com.example.future
 
 import akka.actor.ActorSystem
 import org.scalatest._
 
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
-import scala.util.{ Success, Failure, Try }
+import scala.util.{Failure, Success, Try}
 
 class FutureTimeoutSpec extends AsyncFunSpec with Matchers with BeforeAndAfterEach {
 
-  import scala.concurrent.duration._
   import com.example.helpers.FutureTimeoutHelper._
+
+  import scala.concurrent.duration._
 
   implicit val sys = ActorSystem("test")
   implicit val ec  = sys.dispatcher

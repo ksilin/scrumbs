@@ -1,10 +1,9 @@
-package com.example
+package com.example.future
 
 import akka.actor.ActorSystem
 import org.scalatest._
 
 import scala.concurrent.{Await, Future}
-import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 class FutureToTrySpec extends AsyncFunSpec with Matchers with BeforeAndAfterEach {

@@ -1,13 +1,11 @@
-package com.example
+package com.example.future
 
 import akka.actor.ActorSystem
 import org.scalatest._
 
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.Future
 
 class FutureCombinationSpec extends AsyncFunSpec with Matchers with BeforeAndAfterEach {
-
-  import scala.concurrent.duration._
 
   implicit val sys = ActorSystem("test")
 
