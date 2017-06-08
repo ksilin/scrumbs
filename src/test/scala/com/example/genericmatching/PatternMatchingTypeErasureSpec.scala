@@ -1,24 +1,26 @@
 package com.example.genericmatching
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FreeSpec, MustMatchers }
 
-class PatternMatchingTypeErasureSpec extends FlatSpec with Matchers {
+class PatternMatchingTypeErasureSpec extends FreeSpec with MustMatchers {
+
+  import reflect.runtime.universe._
 
   // http://slides.com/enverosmanov
+  // http://www.cakesolutions.net/teamblogs/ways-to-pattern-match-generic-types-in-scala
 
-  // TODO ask @SUG
-
-  "simple types" should "not work correctly with pattern matching & erasure" in {
+  "simple types must not work correctly with pattern matching & erasure" in {
     case class Pipe(value: Int)
 
     def matching[A, B](sth: B) = sth match {
       case y: A => "c'est une A"
       case n: B => "c'est pas une A"
     }
-    matching[Pipe, Int](42) should be("c'est une A") // TODO - no idea how this can happen but it does
+    // type erasure
+    matching[Pipe, Int](42) mustBe "c'est une A"
   }
 
-  "type tags" should "work correctly with pattern matching & erasure" in {
+  "type tags must work correctly with pattern matching & erasure" in {
     case class Pipe(value: Int)
 
     import scala.reflect.ClassTag
@@ -26,43 +28,46 @@ class PatternMatchingTypeErasureSpec extends FlatSpec with Matchers {
       case y: A => "c'est une A"
       case n: B => "c'est pas une A"
     }
-    matching[Pipe, Int](42) should be("c'est pas une A")
+    matching[Pipe, Int](42) mustBe "c'est pas une A"
   }
 
   // collection type erasure
-  "collections" should "not work properly with pattern matching & type erasure" in {
+  "collections must not work properly with pattern matching & type erasure" in {
 
     val res = List("a") match {
-      case ints: List[Int] => "ints"
+      case ints: List[Int]       => "ints" // IJ warns about the fruitless test here
       case strings: List[String] => "strings"
     }
-    res should be("ints")
+    res mustBe "ints"
   }
 
-  "collections" should "not work properly with pattern matching with naive TypeTags" in {
-
-    import reflect.runtime.universe._
+  "collections must not work properly with pattern matching with naive TypeTags" in {
 
     val l = List("a")
-    def matchColl[A: TypeTag](l: List[A]) = l match
-    {
-      case ints: List[Int] => "ints"
+    def matchColl[A: TypeTag](l: List[A]) = l match {
+      case ints: List[Int]       => "ints"
       case strings: List[String] => "strings"
     }
-    matchColl(l) should be("ints")
+    matchColl(l) mustBe "ints"
   }
 
-  "collections" should "work properly with pattern matching with TypeTags and guards" in {
-
-    import reflect.runtime.universe._
+  "collections must work properly with pattern matching with TypeTags and guards" in {
 
     val l = List("a")
-    def matchColl[A: TypeTag](l: List[A]) = l match
-    {
-      case ints: List[Int] if typeOf[A] <:< typeOf[Int] => "ints"
+    def matchColl[A: TypeTag](l: List[A]) = l match {
+      case ints: List[Int] if typeOf[A] <:< typeOf[Int]          => "ints"
       case strings: List[String] if typeOf[A] <:< typeOf[String] => "strings"
     }
-    matchColl(l) should be("strings")
+    matchColl(l) mustBe "strings"
   }
 
+  "type tags must works even with empty collections" in {
+
+    val l = List.empty[String]
+    def matchColl[A: TypeTag](l: List[A]) = l match {
+      case ints: List[Int] if typeOf[A] <:< typeOf[Int]          => "ints"
+      case strings: List[String] if typeOf[A] <:< typeOf[String] => "strings"
+    }
+    matchColl(l) mustBe "strings"
+  }
 }
