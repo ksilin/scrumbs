@@ -2,7 +2,7 @@ name := """scrumbs"""
 
 version := "1.0"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.6"
 
 resolvers ++= Seq(Resolver.sonatypeRepo("releases"),
                   Resolver.sonatypeRepo("snapshots"),
