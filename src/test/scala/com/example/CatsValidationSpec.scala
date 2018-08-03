@@ -1,14 +1,14 @@
 package com.example
 
 import cats.data.ValidatedNel
-import cats.syntax.CartesianBuilder
-import org.scalatest.{FunSpec, Matchers}
+//import cats.syntax.CartesianBuilder
+import org.scalatest.{ FunSpec, Matchers }
 
 class CatsValidationSpec extends FunSpec with Matchers {
 
   describe("cats Validated & Either") {
 
-    trait Read[A] {def read(s: String): Option[A]}
+    trait Read[A] { def read(s: String): Option[A] }
 
     object Read {
       def apply[A](implicit A: Read[A]): Read[A] = A
@@ -25,11 +25,10 @@ class CatsValidationSpec extends FunSpec with Matchers {
 
     sealed abstract class ConfigError // TODO - why not trait?
     final case class MissingConfig(field: String) extends ConfigError
-    final case class ParseError(field: String) extends ConfigError
-
+    final case class ParseError(field: String)    extends ConfigError
 
     import cats.data.Validated
-    import cats.data.Validated.{Invalid, Valid}
+    import cats.data.Validated.{ Invalid, Valid }
 
     case class Conf(map: Map[String, String]) {
 
@@ -37,10 +36,11 @@ class CatsValidationSpec extends FunSpec with Matchers {
       def parse[A](key: String)(implicit r: Read[A]): Validated[ConfigError, A] =
         map.get(key) match {
           case None => Invalid(MissingConfig(key))
-          case Some(value) => Read[A].read(value) match {
-            case None => Invalid(ParseError(key))
-            case Some(a) => Valid(a)
-          }
+          case Some(value) =>
+            Read[A].read(value) match {
+              case None    => Invalid(ParseError(key))
+              case Some(a) => Valid(a)
+            }
         }
     }
 
@@ -60,22 +60,23 @@ class CatsValidationSpec extends FunSpec with Matchers {
       import cats.data.NonEmptyList
       import cats.instances.list._ // For semigroup (append) on List
 
-      def parallelValidate[E: Semigroup, A, B, C](v1: Validated[E, A], v2: Validated[E, B])(f: (A, B) => C): Validated[E, C] =
+      def parallelValidate[E: Semigroup, A, B, C](v1: Validated[E, A], v2: Validated[E, B])(
+          f: (A, B) => C
+      ): Validated[E, C] =
         (v1, v2) match {
-          case(Valid(a), Valid(b)) => Valid(f(a, b))
-            case(Valid(_), i@Invalid(_)) => i
-            case(i@Invalid(_), Valid(_)) => i
-            case(Invalid(e1), Invalid(e2)) => Invalid(Semigroup[E].combine(e1, e2))
+          case (Valid(a), Valid(b))       => Valid(f(a, b))
+          case (Valid(_), i @ Invalid(_)) => i
+          case (i @ Invalid(_), Valid(_)) => i
+          case (Invalid(e1), Invalid(e2)) => Invalid(Semigroup[E].combine(e1, e2))
         }
 
-      val port: ValidatedNel[ConfigError, Int] = c.parse[Int]("port").toValidatedNel
+      val port: ValidatedNel[ConfigError, Int]    = c.parse[Int]("port").toValidatedNel
       val host: ValidatedNel[ConfigError, String] = c.parse[String]("host").toValidatedNel
 
-      implicit val nelSemigroup: Semigroup[NonEmptyList[ConfigError]] = SemigroupK[NonEmptyList].algebra[ConfigError]
+      implicit val nelSemigroup: Semigroup[NonEmptyList[ConfigError]] =
+        SemigroupK[NonEmptyList].algebra[ConfigError]
 
       println(parallelValidate(host, port)((host, port) => s"$host:$port"))
-
-
 
       val v1: Validated[List[String], Int] = Valid(1)
       val v2: Validated[List[String], Int] = Invalid(List("Accumulates this"))
@@ -93,8 +94,9 @@ class CatsValidationSpec extends FunSpec with Matchers {
 //      } yield (x, y, z)
 //      println(res)
 
-      import cats.instances.all._
-      import cats.syntax.cartesian._
+      import cats.implicits._
+      import cats.syntax.semigroupal._
+      import cats.syntax.apply._
 
       // it no worky either
       // no |@| syntax for Validated or Either
@@ -102,7 +104,11 @@ class CatsValidationSpec extends FunSpec with Matchers {
       //      val eithers = (v1.toEither |@| v2.toEither)
       //      val nels = v3 |@| v4
 
-      val eithers = (v1.toEither |@| v2.toEither)
+      val eithers: (Either[List[String], Int], Either[List[String], Int]) =
+        (v1.toEither, v2.toEither)
+
+      // TODO - |@| syntax is deprecated, use mapN instead, but mapN cannot be found in this case
+//      val eithersMapped = eithers.mapN { case (i1, i2) => i1 + i2 }
 //      println(eithers) // cats.syntax.CartesianBuilder$
 
       // Error:(108, 31) value |@| is not a member of List[Int]

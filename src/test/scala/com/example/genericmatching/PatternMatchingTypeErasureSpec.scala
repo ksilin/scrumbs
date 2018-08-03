@@ -13,8 +13,8 @@ class PatternMatchingTypeErasureSpec extends FreeSpec with MustMatchers {
     case class Pipe(value: Int)
 
     def matching[A, B](sth: B) = sth match {
-      case y: A => "c'est une A"
-      case n: B => "c'est pas une A"
+      case y: A => "c'est une A" // abstract type pattern A is unchecked since it is eliminated by erasure
+      case n: B => "c'est pas une A" // abstract type pattern B is unchecked since it is eliminated by erasure
     }
     // type erasure
     matching[Pipe, Int](42) mustBe "c'est une A"
@@ -35,7 +35,9 @@ class PatternMatchingTypeErasureSpec extends FreeSpec with MustMatchers {
   "collections must not work properly with pattern matching & type erasure" in {
 
     val res = List("a") match {
-      case ints: List[Int]       => "ints" // IJ warns about the fruitless test here
+      // fruitless type test: a value of type List[String] cannot also be a List[Int]
+      // (the underlying of List[Int]) (but still might match its erasure)
+      case ints: List[Int]       => "ints"
       case strings: List[String] => "strings" // unreachable code
     }
     res mustBe "ints"

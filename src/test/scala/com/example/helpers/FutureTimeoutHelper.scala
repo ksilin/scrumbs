@@ -26,9 +26,11 @@ object FutureTimeoutHelper {
       val delayed                = after(t.duration, system.scheduler)(Future.successful(default))
       val completed = Future firstCompletedOf Seq(f, delayed)
       val res = completed map {
+        //  abstract type pattern U is unchecked since it is eliminated by erasure
         case dflt: U =>
           println(s"matching $completed with ${dflt.getClass}")
           Left(dflt)
+          //  abstract type pattern T is unchecked since it is eliminated by erasure
         case originalSuccess: T =>
           println(s"matching $completed with ${originalSuccess.getClass}")
           Right(originalSuccess)

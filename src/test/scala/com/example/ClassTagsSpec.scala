@@ -7,6 +7,8 @@ import scala.reflect.runtime.universe._
 class ClassTagsSpec extends FunSpec with Matchers {
 
   def listMatching[A: TypeTag](lst: List[A]): String = lst match {
+    // non-variable type argument String in type pattern List[String] (the underlying of List[String])
+    // is unchecked since it is eliminated by erasure
     case str: List[String] if typeOf[A] =:= typeOf[String] => "String"
     case int: List[Int] if typeOf[A] =:= typeOf[Int]       => "Int"
     case _                                                 => "Unknown"

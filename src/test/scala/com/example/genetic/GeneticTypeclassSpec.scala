@@ -19,7 +19,7 @@ class GeneticTypeclassSpec extends FreeSpec with Matchers with PropertyChecks {
     type Population[A] = Vector[A]
     type MeasuredChromosome = (Chromo, Long)
 
-    def iterate[A](fitness: A => Long, nextDouble: () => Double = scala.util.Random.nextDouble)
+    def iterate[A](fitness: A => Long, nextDouble: () => Double = () => scala.util.Random.nextDouble())
                   (pop: Population[A])(implicit g: Genetic[A]): Population[A] = ???
 
     "uses scalacheck - success" in {

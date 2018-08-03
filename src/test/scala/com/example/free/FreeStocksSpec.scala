@@ -2,7 +2,9 @@ package com.example.free
 
 import java.util.UUID
 
+import cats.InjectK
 import org.scalatest.{FunSpec, Matchers}
+import cats.implicits._
 
 // not sure why start with this one, but I do:
 
@@ -119,7 +121,7 @@ class FreeStocksSpec extends FunSpec with Matchers {
       // OTOH I can provide any impl I want through the interpreter
       val tradeDynamicStocks: Free[Orders, Response] = for {
         st <- listStocks()
-        _ <- st.traverseU(buy(_, 100))
+        _ <- st.traverse(buy(_, 100))
         rsp <- sell("AAPL", 100)
       } yield rsp
 
@@ -158,32 +160,32 @@ class FreeStocksSpec extends FunSpec with Matchers {
 
       // in order to flatMap over different monads, we need a more complex structure
       // not understanding what goes on now, take it as a boilerplate for the moment
-      import cats.free.Inject
+      import cats.free._
 
       // the implicit Inject will resolve to a type binding different monads together on compilation
-      class OrderI[F[_]](implicit I: Inject[Orders, F]) {
+      class OrderI[F[_]](implicit I: InjectK[Orders, F]) {
         def buyI(stock: Symbol, amount: Int): Free[F, Response] = Free.inject[Orders, F](Buy(stock, amount))
 
         def sellI(stock: Symbol, amount: Int): Free[F, Response] = Free.inject[Orders, F](Sell(stock, amount))
       }
 
-      implicit def orderI[F[_]](implicit I: Inject[Orders, F]): OrderI[F] = new OrderI[F]
+      implicit def orderI[F[_]](implicit I: InjectK[Orders, F]): OrderI[F] = new OrderI[F]
 
       // and the same for logs
-      class LogI[F[_]](implicit I: Inject[Log, F]) {
+      class LogI[F[_]](implicit I: InjectK[Log, F]) {
         def infoI(msg: String): Free[F, Unit] = Free.inject[Log, F](Info(msg))
 
         def errorI(msg: String): Free[F, Unit] = Free.inject[Log, F](Error(msg))
       }
 
-      implicit def logI[F[_]](implicit I: Inject[Log, F]): LogI[F] = new LogI[F]
+      implicit def logI[F[_]](implicit I: InjectK[Log, F]): LogI[F] = new LogI[F]
 
 
-      // in order to use both laguages in a for-comp, we need to combine them with Coproduct
-      import cats.data.Coproduct
+      // in order to use both laguages in a for-comp, we need to combine them with Coproduct/EitherK
+      import cats.data._
 
       // TODO - do we need a coproduct for each pair of free monads?
-      type TradeApp[A] = Coproduct[Orders, Log, A]
+      type TradeApp[A] = EitherK[Orders, Log, A]
 
       // this compiles at least, but I still have no idea how to use it
       // the implicit Inject will help us build a compat layer between both monads
@@ -222,13 +224,13 @@ class FreeStocksSpec extends FunSpec with Matchers {
       case class UserActionAudit(user: UserId, action: String, values: List[Values]) extends Audit[Unit]
       case class SystemActionAudit(job: JobId, action: String, values: List[Values]) extends Audit[Unit]
 
-      class AuditI[F[_]](implicit I: Inject[Audit, F]) {
+      class AuditI[F[_]](implicit I: InjectK[Audit, F]) {
         def userActionAuditI(user: UserId, action: String, values: List[Values]) = Free.inject[Audit, F](UserActionAudit(user, action, values))
 
         def systemActionAuditI(job: JobId, action: String, values: List[Values]) = Free.inject[Audit, F](SystemActionAudit(job, action, values))
       }
 
-      implicit def AuditI[F[_]](implicit I: Inject[Audit, F]): AuditI[F] = new AuditI[F]
+      implicit def AuditI[F[_]](implicit I: InjectK[Audit, F]): AuditI[F] = new AuditI[F]
 
       def auditPrinter: Audit ~> Id =
         new (Audit ~> Id) {
@@ -242,7 +244,7 @@ class FreeStocksSpec extends FunSpec with Matchers {
       // lets take th eone Coproduct we have alredy created for Order & Log and use it as a single type/monad
 
       // due to the implementation of Inject, TradeApp need to be on the right side or -> no compile
-      type AuditableTradeApp[A] = Coproduct[Audit, TradeApp, A]
+      type AuditableTradeApp[A] = EitherK[Audit, TradeApp, A]
 
       // the order is also important here, due to impl of 'or'
       def auditableInerpreter: AuditableTradeApp ~> Id = auditPrinter or orderAndLogInterpreter

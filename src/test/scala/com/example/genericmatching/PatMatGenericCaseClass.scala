@@ -11,6 +11,8 @@ class PatMatGenericCaseClass extends FreeSpec with MustMatchers {
   "type erasure make all matches beyond the first one unreachable" in {
 
     def run(p: Params): String = p match {
+      // non-variable type argument String in type pattern List[String] (the underlying of List[String])
+      // is unchecked since it is eliminated by erasure
       case GenParams(ts: List[String], f: (String => Boolean)) => "string case"
       case GenParams(ts: List[Int], f: (Int => Boolean))       => "int case" // unreachable code
       case _                                                   => "default"

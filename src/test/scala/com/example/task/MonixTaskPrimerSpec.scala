@@ -4,11 +4,11 @@ package com.example.task
 import java.io.Serializable
 import java.time.LocalDateTime
 
-import monix.execution.{Cancelable, Scheduler}
+import monix.execution.{ Cancelable, Scheduler }
 import monix.execution.Scheduler.Implicits.global
 import monix.execution.schedulers.AsyncScheduler
 import monix.execution.schedulers.TestScheduler
-import org.scalatest.{FreeSpec, FunSpec, Matchers}
+import org.scalatest.{ FreeSpec, FunSpec, Matchers }
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -19,7 +19,7 @@ import monix.execution.CancelableFuture
 
 // Task is in monix.eval
 import monix.eval.Task
-import scala.util.{Success, Failure}
+import scala.util.{ Failure, Success }
 
 // https://monix.io/docs/2x/eval/task.html
 // https://vimeo.com/channels/flatmap2016/165922572
@@ -44,13 +44,11 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
 
       // Tasks get evaluated only on runAsync!
       // Callback style:
-      val cancelable: Cancelable = task.runAsync { result =>
-        result match {
-          case Success(value) =>
-            println(value)
-          case Failure(ex) =>
-            System.out.println(s"ERROR: ${ex.getMessage}")
-        }
+      val cancelable: Cancelable = task.runOnComplete {
+        case Success(value) =>
+          println(value)
+        case Failure(ex) =>
+          System.out.println(s"ERROR: ${ex.getMessage}")
       }
       //=> 2
 
@@ -89,7 +87,6 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
       val memoized = getResultAlways.memoize
       println("memoized: " + memoized)
 
-
       // task factory
       val tf = Task.defer {
         Task.now {
@@ -98,7 +95,7 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
       }
       val ra: CancelableFuture[Unit] = tf.runAsync
       println(ra)
-      println(ra) // same
+      println(ra)          // same
       println(tf.runAsync) // new instance
 
       // guarantees async exec
@@ -109,7 +106,7 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
   "simple etl with tasks" - {
 
     type Response = String
-    type Record = String
+    type Record   = String
 
     def extract(offset: Int, amount: Int) = Task {
       List.fill(amount)(offset + Random.nextInt(1000))
@@ -135,7 +132,7 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
       val etl: Task[List[Response]] = extract(0, 3) flatMap (tl(_, intToString))
 
       val ts = TestScheduler()
-      val f = etl.runAsync(ts)
+      val f  = etl.runAsync(ts)
 
       // smallest possible tick?
       //      ts.tick(1 nanosecond)
@@ -153,18 +150,20 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
       }
 
       // does not recover
-      val withRecovery: Task[List[Response]] = etl.onErrorRecoverWith { case t: Throwable =>
-        println(s"failed with $t")
-        etl
+      val withRecovery: Task[List[Response]] = etl.onErrorRecoverWith {
+        case t: Throwable =>
+          println(s"failed with $t")
+          etl
       }
 
-      val withHandling: Task[Serializable] = etl.onErrorHandleWith { case t: Throwable =>
-        println(s"failed with $t. Handling error")
-        Task.now("recovered")
+      val withHandling: Task[Serializable] = etl.onErrorHandleWith {
+        case t: Throwable =>
+          println(s"failed with $t. Handling error")
+          Task.now("recovered")
       }
 
       val ts = TestScheduler()
-      val f = withHandling.runAsync(ts)
+      val f  = withHandling.runAsync(ts)
 
       // smallest possible tick?
       //      ts.tick(1 nanosecond)

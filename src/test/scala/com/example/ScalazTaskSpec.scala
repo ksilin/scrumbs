@@ -108,7 +108,7 @@ class ScalazTaskSpec extends AsyncFunSpec with Matchers {
 
       val longRunning: Task[String] = Task {Thread.sleep(1000); "and done"}
 
-       val timed: Task[String] = longRunning.unsafePerformTimed(50)
+       val timed: Task[String] = longRunning.timed(50)
 
       // TODO - why is no exception is thrown?
       val ex = intercept[Exception] {

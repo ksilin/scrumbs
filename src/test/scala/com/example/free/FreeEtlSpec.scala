@@ -70,7 +70,7 @@ class FreeEtlSpec extends FunSpec with Matchers {
 
       val etl = for {
         b <- calcBatches(0, 1000, 10)
-        rs <- b.traverseU(f => simpleEtl(f.offset, f.amount)) //f => fetch(f.offset, f.amount).flatMap(r => store(r)))
+        rs <- b.traverse(f => simpleEtl(f.offset, f.amount)) //f => fetch(f.offset, f.amount).flatMap(r => store(r)))
       } yield rs
       println(etl)
 
@@ -138,7 +138,7 @@ class FreeEtlSpec extends FunSpec with Matchers {
 
       val etl = for {
         b <- calcBatches(0, 1000, 10)
-        rs <- b.traverseU(f => simpleEtl(f.offset, f.amount)) //f => fetch(f.offset, f.amount).flatMap(r => store(r)))
+        rs <- b.traverse(f => simpleEtl(f.offset, f.amount)) //f => fetch(f.offset, f.amount).flatMap(r => store(r)))
       } yield rs
       println(etl)
 
@@ -203,7 +203,7 @@ class FreeEtlSpec extends FunSpec with Matchers {
 
       def fullEtl(offset: Int, amount: Int, batchSize: Int) = for {
         b <- calcBatches(offset, amount, batchSize)
-        rs <- b.traverseU(f => simpleEtl(f.offset, f.amount)) //fetch(f.offset, f.amount).flatMap { r: Future[List[Record]] => store(r) })
+        rs <- b.traverse(f => simpleEtl(f.offset, f.amount)) //fetch(f.offset, f.amount).flatMap { r: Future[List[Record]] => store(r) })
       } yield rs
 
       println("full etl")
@@ -211,7 +211,7 @@ class FreeEtlSpec extends FunSpec with Matchers {
 
       def batchEtl(offset: Int, amount: Int, batchSize: Int) = for {
         b <- calcBatches(offset, amount, batchSize)
-        rs <- b.traverseU(f => batch(f.offset, f.amount))
+        rs <- b.traverse(f => batch(f.offset, f.amount))
       } yield rs
 
       println("batch etl")
