@@ -36,7 +36,7 @@ class PatternMatchingTypeErasureSpec extends FreeSpec with MustMatchers {
 
     val res = List("a") match {
       case ints: List[Int]       => "ints" // IJ warns about the fruitless test here
-      case strings: List[String] => "strings"
+      case strings: List[String] => "strings" // unreachable code
     }
     res mustBe "ints"
   }
@@ -46,7 +46,7 @@ class PatternMatchingTypeErasureSpec extends FreeSpec with MustMatchers {
     val l = List("a")
     def matchColl[A: TypeTag](l: List[A]) = l match {
       case ints: List[Int]       => "ints"
-      case strings: List[String] => "strings"
+      case strings: List[String] => "strings" // unreachable code
     }
     matchColl(l) mustBe "ints"
   }

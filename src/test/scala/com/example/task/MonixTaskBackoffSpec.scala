@@ -73,7 +73,7 @@ class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
     "backing off explonentially" in {
 
       val unitsOfWork: List[Int] = List.fill(500)(Random.nextInt(1000))
-      val t: Task[List[Int]] = retryBackoff[Int](failingTask, unitsOfWork, 8, 10, 10 millisecond)
+      val t: Task[List[Int]] = retryBackoff[Int](failingTask, unitsOfWork, 8, 10, 10.millisecond)
 
       val f = t.runAsync
 
@@ -87,7 +87,7 @@ class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
     "failing once max retries reached" in {
 
       val unitsOfWork: List[Int] = List.fill(500)(Random.nextInt(1000))
-      val t: Task[List[Int]] = retryBackoff[Int](failingTask, unitsOfWork, 8, 2, 10 millisecond)
+      val t: Task[List[Int]] = retryBackoff[Int](failingTask, unitsOfWork, 8, 2, 10.millisecond)
 
       val f = t.runAsync
 
@@ -102,7 +102,7 @@ class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
     "failing once min units of work reached" in {
 
       val unitsOfWork: List[Int] = List.fill(500)(Random.nextInt(1000))
-      val t: Task[List[Int]] = retryBackoff[Int](failingTask, unitsOfWork, 300, 10, 10 millisecond)
+      val t: Task[List[Int]] = retryBackoff[Int](failingTask, unitsOfWork, 300, 10, 10.millisecond)
 
       val f = t.runAsync
 
@@ -117,7 +117,7 @@ class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
   "backing off explonentially with try" in {
 
     val unitsOfWork: List[Int] = List.fill(500)(Random.nextInt(1000))
-    val t: Task[List[Int]] = retryBackoffTry[Int](failingTask, unitsOfWork, 8, 10, 10 millisecond)
+    val t: Task[List[Int]] = retryBackoffTry[Int](failingTask, unitsOfWork, 8, 10, 10.millisecond)
 
     val f = t.runAsync
 

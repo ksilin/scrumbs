@@ -29,7 +29,7 @@ class ClassTagsSpec extends FunSpec with Matchers {
 
   def naiveMatching[A](lst: List[A]): String = lst match {
     case str: List[String] => "String"
-    case int: List[Int]    => "Int"
+    case int: List[Int]    => "Int" // unreachable
     case _                 => "Unknown"
   }
 
@@ -47,7 +47,7 @@ class ClassTagsSpec extends FunSpec with Matchers {
 
   def simpleTMatching[T](t: T): String = t match {
     case str: List[String] => "String"
-    case int: List[Int]    => "Int"
+    case int: List[Int]    => "Int"  // unreachable
     case _                 => "Unknown"
   }
 

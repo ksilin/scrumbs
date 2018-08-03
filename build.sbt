@@ -10,31 +10,48 @@ resolvers ++= Seq(Resolver.sonatypeRepo("releases"),
 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4")
 
-val scalazVersion    = "7.2.13"
-val catsVersion      = "0.9.0"
-val monixVersion     = "2.3.0"
-val akkaVersion      = "2.5.2"
-val shapelessVersion = "2.3.2"
+lazy val lib = new {
+  object Version {
+    val scalaz    = "7.2.13"
+    val cats      = "0.9.0"
+    val monix     = "2.3.0"
+    val akka      = "2.5.2"
+    val shapeless = "2.3.3"
+  }
+
+  val scalatest        = "org.scalatest"              %% "scalatest"         % "3.0.3"
+  val scalaArm         = "com.jsuereth"               %% "scala-arm"         % "2.0"
+  val shapeless        = "com.chuusai"                %% "shapeless"         % Version.shapeless
+  val scalaz           = "org.scalaz"                 %% "scalaz-core"       % Version.scalaz
+  val scalazConcurrent = "org.scalaz"                 %% "scalaz-concurrent" % Version.scalaz
+  val cats             = "org.typelevel"              %% "cats"              % Version.cats
+  val catsFree         = "org.typelevel"              %% "cats-free"         % Version.cats
+  val monix            = "io.monix"                   %% "monix"             % Version.monix
+  val monixCats        = "io.monix"                   %% "monix-cats"        % Version.monix
+  val fetch            = "com.fortysevendeg"          %% "fetch"             % "0.5.0" // TODO - try/test fetch
+  val akkaActor        = "com.typesafe.akka"          %% "akka-actor"        % Version.akka
+  val commonsCompress  = "org.apache.commons"         % "commons-compress"   % "1.14"
+  val betterFiles      = "com.github.pathikrit"       %% "better-files-akka" % "3.6.0"
+  val scalaLogging     = "com.typesafe.scala-logging" %% "scala-logging"     % "3.9.0"
+  val logback          = "ch.qos.logback"             % "logback-classic"    % "1.2.3"
+}
 
 libraryDependencies ++=
   Seq(
-    "org.scalatest"              %% "scalatest"         % "3.0.3",
-//    "org.scalacheck"             %% "scalacheck"        % "1.13.4",
-    "com.jsuereth"               %% "scala-arm"         % "2.0",
-    "com.chuusai"                %% "shapeless"         % shapelessVersion,
-    "org.scalaz"                 %% "scalaz-core"       % scalazVersion,
-    "org.scalaz"                 %% "scalaz-concurrent" % scalazVersion,
-    "org.typelevel"              %% "cats"              % catsVersion,
-    "org.typelevel"              %% "cats-free"         % catsVersion,
-    "io.monix"                   %% "monix"             % monixVersion,
-    "io.monix"                   %% "monix-cats"        % monixVersion,
-//    "com.projectseptember"       %% "freek"             % "0.6.5",
-    "com.fortysevendeg"          %% "fetch"             % "0.5.0", // TODO - try/test fetch
-    "com.typesafe.akka"          %% "akka-actor"        % akkaVersion,
-    "org.apache.commons"         % "commons-compress"   % "1.14",
-    "com.github.pathikrit"       %% "better-files-akka" % "3.0.0",
-    "com.typesafe.scala-logging" %% "scala-logging"     % "3.5.0",
-    "ch.qos.logback"             % "logback-classic"    % "1.2.3"
+    lib.scalatest,
+    lib.scalaArm,
+    lib.shapeless,
+    lib.scalaz,
+    lib.scalazConcurrent,
+    lib.cats,
+    lib.catsFree,
+    lib.monix,
+    lib.monixCats,
+    lib.akkaActor,
+    lib.commonsCompress,
+    lib.betterFiles,
+    lib.scalaLogging,
+    lib.logback
   )
 
 scalacOptions ++= Seq("-feature", "-language:higherKinds")

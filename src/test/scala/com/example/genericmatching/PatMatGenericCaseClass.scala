@@ -12,7 +12,7 @@ class PatMatGenericCaseClass extends FreeSpec with MustMatchers {
 
     def run(p: Params): String = p match {
       case GenParams(ts: List[String], f: (String => Boolean)) => "string case"
-      case GenParams(ts: List[Int], f: (Int => Boolean))       => "int case"
+      case GenParams(ts: List[Int], f: (Int => Boolean))       => "int case" // unreachable code
       case _                                                   => "default"
     }
     run(GenParams[Int](List(1), x => x % 2 == 0)) mustBe "string case"
