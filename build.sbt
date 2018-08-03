@@ -29,6 +29,7 @@ lazy val lib = new {
   val catsFree         = "org.typelevel"              %% "cats-free"         % Version.cats
   val monix            = "io.monix"                   %% "monix"             % Version.monix
   val monixCats        = "io.monix"                   %% "monix-cats"        % Version.monix
+  val retry            = "com.softwaremill.retry"     %% "retry"             % "0.3.0"
   val fetch            = "com.fortysevendeg"          %% "fetch"             % "0.5.0" // TODO - try/test fetch
   val akkaActor        = "com.typesafe.akka"          %% "akka-actor"        % Version.akka
   val commonsCompress  = "org.apache.commons"         % "commons-compress"   % "1.17"
@@ -50,6 +51,7 @@ libraryDependencies ++=
     lib.monix,
     lib.monixCats,
     lib.akkaActor,
+    lib.retry,
     lib.commonsCompress,
     lib.betterFiles,
     lib.scalaLogging,
