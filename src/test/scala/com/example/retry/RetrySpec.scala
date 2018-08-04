@@ -108,9 +108,14 @@ class RetrySpec extends FreeSpec with MustMatchers with ScalaFutures {
       case NonFatal(e) => retry.Pause(3, 1.second)
     }
 
+    val f = () => Future{
+      println(s"retrying: ${System.currentTimeMillis()}")
+      throw new Exception("boom")
+      None // using the built-in value for Success[Option]
+    }
 
-
-    policy(execptionalAttempt)
+    val x: Future[Option[_]] = policy(f)
+    x.futureValue
   }
 
 }
