@@ -94,11 +94,8 @@ class RetrySpec extends FreeSpec with MustMatchers with ScalaFutures {
           j += 1
           (i, j)
         }
-
       })
-
-    val done = run.futureValue
-
+    run.futureValue
   }
 
   // policies - Directly, Pause, Backoff
