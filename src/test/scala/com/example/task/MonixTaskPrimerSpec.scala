@@ -5,8 +5,7 @@ import java.io.Serializable
 import java.time.LocalDateTime
 
 import monix.execution.{ Cancelable, Scheduler }
-import monix.execution.Scheduler.Implicits.global
-import monix.execution.schedulers.AsyncScheduler
+
 import monix.execution.schedulers.TestScheduler
 import org.scalatest.{ FreeSpec, FunSpec, Matchers }
 
@@ -31,6 +30,8 @@ import scala.util.{ Failure, Success }
 
 class MonixTaskPrimerSpec extends FreeSpec with Matchers {
 
+  val sc = monix.execution.Scheduler.Implicits.global
+
   "dipping my toes into monix task" - {
 
     "should work" in {
@@ -49,15 +50,15 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
           println(value)
         case Failure(ex) =>
           System.out.println(s"ERROR: ${ex.getMessage}")
-      }
+      }(sc)
       //=> 2
 
       // Or you can convert it into a Future
       val future: CancelableFuture[Int] =
-        task.runAsync
+        task.runAsync(sc)
 
       // Printing the result asynchronously
-      future.foreach(println)
+      future.foreach(println)(sc)
     }
 
     "should run examples from the talk" in {
@@ -72,16 +73,16 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
         println(s"effect once + ${LocalDateTime.now}");
         LocalDateTime.now
       }
-      once.runAsync
-      once.runAsync // no effect
+      once.runAsync(sc)
+      once.runAsync(sc) // no effect
 
       // equiv to a fn - will try to execute synchronously
       val getResultAlways: Task[String] = Task.eval {
         println("effect fn");
         "always"
       }
-      getResultAlways.runAsync
-      getResultAlways.runAsync
+      getResultAlways.runAsync(sc)
+      getResultAlways.runAsync(sc)
 
       // turning into evalOnce
       val memoized = getResultAlways.memoize
@@ -93,10 +94,10 @@ class MonixTaskPrimerSpec extends FreeSpec with Matchers {
           println("effect fact")
         }
       }
-      val ra: CancelableFuture[Unit] = tf.runAsync
+      val ra: CancelableFuture[Unit] = tf.runAsync(sc)
       println(ra)
       println(ra)          // same
-      println(tf.runAsync) // new instance
+      println(tf.runAsync(sc)) // new instance
 
       // guarantees async exec
       Task.fork(Task.eval(println("effect fn")))

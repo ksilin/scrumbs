@@ -2,7 +2,6 @@ package com.example.task
 
 import java.io.Serializable
 
-import monix.execution.Scheduler.Implicits.global
 import org.scalatest.{AsyncFreeSpec, Matchers}
 
 import scala.concurrent.TimeoutException
@@ -17,6 +16,8 @@ import monix.execution.CancelableFuture
 import monix.eval.Task
 
 class MonixTaskErrorSpec extends AsyncFreeSpec with Matchers {
+
+  val sc = monix.execution.Scheduler.Implicits.global
 
   // TODO - onErrorRestart / If
 
@@ -48,7 +49,7 @@ class MonixTaskErrorSpec extends AsyncFreeSpec with Matchers {
       }
 
       val d: Task[Nothing] = failing.delayExecution(1.second)
-      recoverToSucceededIf[IllegalStateException] {failing.runAsync} //(r => println(r)))
+      recoverToSucceededIf[IllegalStateException] {failing.runAsync(sc)} //(r => println(r)))
     }
 
 
@@ -59,7 +60,7 @@ class MonixTaskErrorSpec extends AsyncFreeSpec with Matchers {
       }
       // Even though Monix expects for the arguments given to its operators, like flatMap,
       // to be pure or at least protected from errors, it still catches errors, signaling them on runAsync:
-      recoverToSucceededIf[IllegalStateException](t.runAsync)
+      recoverToSucceededIf[IllegalStateException](t.runAsync(sc))
     }
 
     // In case an error happens in the callback provided to runAsync,
@@ -82,7 +83,7 @@ class MonixTaskErrorSpec extends AsyncFreeSpec with Matchers {
       val delayed = Task("hi").delayExecution(10.seconds).timeout(3.seconds)
 
       recoverToSucceededIf[TimeoutException] {
-        val f: CancelableFuture[Record] = delayed.runAsync
+        val f: CancelableFuture[Record] = delayed.runAsync(sc)
         f.onComplete(r => println(s"completed: $r"))
         // java.util.concurrent.TimeoutException: Task timed-out after 3.seconds of inactivity
         f
@@ -99,7 +100,7 @@ class MonixTaskErrorSpec extends AsyncFreeSpec with Matchers {
         case other => Task.raiseError(other)
       }
 
-      val f: CancelableFuture[Record] = recovered.runAsync
+      val f: CancelableFuture[Record] = recovered.runAsync(sc)
       f.onComplete(r => println(s"completed: $r")) // Success(recovered!)
       f map { res: Serializable =>
         res should be("recovered!")
@@ -114,7 +115,7 @@ class MonixTaskErrorSpec extends AsyncFreeSpec with Matchers {
         case _: TimeoutException => "recovered!"
       }
 
-      val f = recovered.runAsync
+      val f = recovered.runAsync(sc)
       f.onComplete(r => println(s"completed: $r")) // Success(recovered!)
       f map { res: Serializable =>
         res should be("recovered!")
@@ -134,7 +135,7 @@ class MonixTaskErrorSpec extends AsyncFreeSpec with Matchers {
       val composedFail: Task[Nothing] = Task.now("x") flatMap { _ => throw new IllegalStateException("failing") }
       //      val composedFail: Task[Nothing] = Task("x") flatMap { _ => throw new IllegalStateException("failing")}
       val withHandling: Task[Serializable] = composedFail.onErrorHandleWith(recoverFromISE)
-      withHandling.runAsync map {_ should be("recovered from ISE")}
+      withHandling.runAsync(sc) map {_ should be("recovered from ISE")}
     }
 
     "root cause of bug" in {

@@ -1,14 +1,16 @@
 package com.example.task
 
-import monix.execution.Scheduler.Implicits.global
 import org.scalatest.{AsyncFreeSpec, Failed, Matchers, Succeeded}
 
 import scala.util.Random
 import monix.eval.Task
+import monix.execution.Scheduler.Implicits.global
 
 import scala.concurrent.Future
 
 class MonixTaskSeqParSpec extends AsyncFreeSpec with Matchers {
+
+  val sc = monix.execution.Scheduler.Implicits.global
 
 
   "sequential and parallel execution" - {
@@ -29,7 +31,7 @@ class MonixTaskSeqParSpec extends AsyncFreeSpec with Matchers {
         e3 <- extract(2, 3)
       } yield e1 ++ e2 ++ e3
 
-      val f= allTogether.runAsync
+      val f= allTogether.runAsync(sc)
 
       f map {r =>
         println(r)
@@ -43,15 +45,16 @@ class MonixTaskSeqParSpec extends AsyncFreeSpec with Matchers {
       val allTogether: Task[(List[Int], List[Int], List[Int])] = Task.zip3(extract(0, 1), extract(1, 2), extract(2, 3))
 
       val concat = allTogether map { ls => ls._1 ++ ls._2 ++ ls._3}
-      val f = concat.runAsync
+      val f = concat.runAsync(sc)
       f map {r =>
         println(r)
         r.size should be(6)
       }
     }
+    val extracts = List(extract(0, 1), extract(1, 2), extract(2, 3))
     "parallel but ordered with zipList / gather" in {
 
-      val tasks: List[Task[List[Int]]] = List(extract(0, 1), extract(1, 2), extract(2, 3))
+      val tasks: List[Task[List[Int]]] = extracts
       // TODO - not worky:
       // Error:(53, 65) type mismatch;
 //      found   : List[monix.eval.Task[List[Int]]]
@@ -69,10 +72,10 @@ class MonixTaskSeqParSpec extends AsyncFreeSpec with Matchers {
 
     "parallel unordered with gatherUnordered" in {
 
-      val allTogether: Task[Seq[List[Int]]] = Task.gatherUnordered(List(extract(0, 1), extract(1, 2), extract(2, 3)))
+      val allTogether: Task[Seq[List[Int]]] = Task.gatherUnordered(extracts)
 
       val concat = allTogether map { ls => ls.flatten}
-      val f= concat.runAsync
+      val f= concat.runAsync(sc)
       f map {r =>
         println(r)
         r.size should be(6)
@@ -81,10 +84,10 @@ class MonixTaskSeqParSpec extends AsyncFreeSpec with Matchers {
 
     "sequential with sequence" in {
 
-      val allTogether: Task[List[List[Int]]] = Task.sequence(List(extract(0, 1), extract(1, 2), extract(2, 3)))
+      val allTogether: Task[List[List[Int]]] = Task.sequence(extracts)
       val concat = allTogether map { ls => ls.flatten}
 
-      val f= concat.runAsync
+      val f= concat.runAsync(sc)
       f map {r =>
         println(r)
         r.size should be(6)
@@ -92,8 +95,8 @@ class MonixTaskSeqParSpec extends AsyncFreeSpec with Matchers {
     }
 
     "only first result" in {
-      val allTogether: Task[List[Int]] = Task.chooseFirstOfList(List(extract(0, 1), extract(1, 2), extract(2, 3)))
-      allTogether.runAsync map{ r =>
+      val allTogether = Task.raceMany(extracts)
+      allTogether.runToFuture map{ r =>
         println(r)
         r.size should be < 4
       }

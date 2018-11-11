@@ -1,6 +1,7 @@
 package com.example.task
 
 import monix.eval.Task
+import monix.execution.CancelableFuture
 import monix.execution.Scheduler.Implicits.global
 import org.scalatest.{AsyncFreeSpec, Matchers}
 
@@ -10,10 +11,12 @@ import scala.util.{Failure, Random, Success, Try}
 
 class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
 
+  val sc = monix.execution.Scheduler.Implicits.global
+
   // TODO - allow more than 2 splits,
   // TODO - allow splits running sequentially
   // in order to reduce workload, need to pass the params of the original task as well
-  def retryBackoff[A](getTask: (List[Int]) => Task[List[A]], unitsOfWork: List[Int], minBatch: Int,
+  def retryBackoff[A](getTask: List[Int] => Task[List[A]], unitsOfWork: List[Int], minBatch: Int,
                       maxRetries: Int, firstDelay: FiniteDuration): Task[List[A]] = {
 
     println(s"running with ${unitsOfWork.size} units of work, min size: $minBatch. retries: $maxRetries, delay: $firstDelay")
@@ -30,7 +33,7 @@ class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
     }
   }
 
-  def retryBackoffTry[A](getTask: (List[Int]) => Task[List[A]], unitsOfWork: List[Int], minBatch: Int,
+  def retryBackoffTry[A](getTask: List[Int] => Task[List[A]], unitsOfWork: List[Int], minBatch: Int,
                          maxRetries: Int, firstDelay: FiniteDuration): Task[List[A]] = {
     println(s"running with ${unitsOfWork.size} units of work, min size: $minBatch. retries: $maxRetries, delay: $firstDelay")
 
@@ -49,7 +52,7 @@ class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
     }
   }
 
-  def splitAndZip[A](getTask: (List[Int]) => Task[List[A]], unitsOfWork: List[Int], minBatch: Int, maxRetries: Int, firstDelay: FiniteDuration): Task[List[A]] = {
+  def splitAndZip[A](getTask: List[Int] => Task[List[A]], unitsOfWork: List[Int], minBatch: Int, maxRetries: Int, firstDelay: FiniteDuration): Task[List[A]] = {
     val workSplits = unitsOfWork.splitAt(unitsOfWork.size / 2)
     val zipped: Task[(List[A], List[A])] =
       Task.zip2(
@@ -75,7 +78,7 @@ class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
       val unitsOfWork: List[Int] = List.fill(500)(Random.nextInt(1000))
       val t: Task[List[Int]] = retryBackoff[Int](failingTask, unitsOfWork, 8, 10, 10.millisecond)
 
-      val f = t.runAsync
+      val f: CancelableFuture[List[Int]] = t.runAsync(sc)
 
       f map {
         r =>
@@ -89,7 +92,7 @@ class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
       val unitsOfWork: List[Int] = List.fill(500)(Random.nextInt(1000))
       val t: Task[List[Int]] = retryBackoff[Int](failingTask, unitsOfWork, 8, 2, 10.millisecond)
 
-      val f = t.runAsync
+      val f: CancelableFuture[List[Int]] = t.runAsync(sc)
 
       val ex: Future[IllegalStateException] = recoverToExceptionIf[IllegalStateException](f)
       ex map {
@@ -104,7 +107,7 @@ class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
       val unitsOfWork: List[Int] = List.fill(500)(Random.nextInt(1000))
       val t: Task[List[Int]] = retryBackoff[Int](failingTask, unitsOfWork, 300, 10, 10.millisecond)
 
-      val f = t.runAsync
+      val f: CancelableFuture[List[Int]] = t.runAsync(sc)
 
       val ex: Future[IllegalStateException] = recoverToExceptionIf[IllegalStateException](f)
       ex map {
@@ -119,7 +122,7 @@ class MonixTaskBackoffSpec extends AsyncFreeSpec with Matchers {
     val unitsOfWork: List[Int] = List.fill(500)(Random.nextInt(1000))
     val t: Task[List[Int]] = retryBackoffTry[Int](failingTask, unitsOfWork, 8, 10, 10.millisecond)
 
-    val f = t.runAsync
+    val f: CancelableFuture[List[Int]] = t.runAsync(sc)
 
     f map {
       r =>

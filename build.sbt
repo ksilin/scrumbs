@@ -2,20 +2,20 @@ name := """scrumbs"""
 
 version := "1.0"
 
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.7"
 
 resolvers ++= Seq(Resolver.sonatypeRepo("releases"),
                   Resolver.sonatypeRepo("snapshots"),
                   Resolver.bintrayRepo("projectseptemberinc", "maven"))
 
-addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
+addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8")
 
 lazy val lib = new {
   object Version {
-    val scalaz    = "7.2.25"
-    val cats      = "1.2.0"
-    val monix     = "2.3.3"
-    val akka      = "2.5.14"
+    val scalaz    = "7.2.27"
+    val cats      = "1.4.0"
+    val monix     = "3.0.0-RC2"
+    val akka      = "2.5.18"
     val shapeless = "2.3.3"
   }
 
@@ -28,11 +28,10 @@ lazy val lib = new {
   val cats             = "org.typelevel"              %% "cats-core"         % Version.cats
   val catsFree         = "org.typelevel"              %% "cats-free"         % Version.cats
   val monix            = "io.monix"                   %% "monix"             % Version.monix
-  val monixCats        = "io.monix"                   %% "monix-cats"        % Version.monix
-  val retry            = "com.softwaremill.retry"     %% "retry"             % "0.3.0"
+  val retry            = "com.softwaremill.retry"     %% "retry"             % "0.3.1"
   val fetch            = "com.fortysevendeg"          %% "fetch"             % "0.5.0" // TODO - try/test fetch
   val akkaActor        = "com.typesafe.akka"          %% "akka-actor"        % Version.akka
-  val commonsCompress  = "org.apache.commons"         % "commons-compress"   % "1.17"
+  val commonsCompress  = "org.apache.commons"         % "commons-compress"   % "1.18"
   val betterFiles      = "com.github.pathikrit"       %% "better-files-akka" % "3.6.0"
   val scalaLogging     = "com.typesafe.scala-logging" %% "scala-logging"     % "3.9.0"
   val logback          = "ch.qos.logback"             % "logback-classic"    % "1.2.3"
@@ -49,7 +48,6 @@ libraryDependencies ++=
     lib.cats,
     lib.catsFree,
     lib.monix,
-    lib.monixCats,
     lib.akkaActor,
     lib.retry,
     lib.commonsCompress,
